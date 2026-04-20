@@ -7,7 +7,7 @@ export default defineSchema({
     name: v.string(),
     email: v.string(),
     passwordHash: v.string(),
-    role: v.union(v.literal("user"), v.literal("admin")),
+    role: v.string(),
     age: v.optional(v.number()),
     weight: v.optional(v.number()),
     height: v.optional(v.number()),

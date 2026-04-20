@@ -61,13 +61,8 @@ export default function RegisterScreen() {
         goal: selectedGoal,
       });
 
-      await setUser(result.userId, name.trim(), result.role as "user" | "admin");
-
-      if (result.role === "admin") {
-        router.replace("/admin");
-      } else {
-        router.replace("/(tabs)");
-      }
+      await setUser(result.userId, name.trim(), "user");
+      router.replace("/(tabs)");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Registrasi gagal";
       Alert.alert("Error", message);

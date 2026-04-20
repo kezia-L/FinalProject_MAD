@@ -20,9 +20,7 @@ export const register = mutation({
       throw new Error("Email sudah terdaftar");
     }
 
-    // First user gets admin role
-    const allUsers = await ctx.db.query("users").take(1);
-    const role = allUsers.length === 0 ? "admin" : "user";
+    const role = "user";
 
     const dailyCalorieTarget = 2000;
 

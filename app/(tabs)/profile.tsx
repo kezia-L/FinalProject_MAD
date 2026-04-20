@@ -131,11 +131,6 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.profileName}>{userProfile?.name ?? "..."}</Text>
           <Text style={styles.profileEmail}>{userProfile?.email ?? ""}</Text>
-          {userProfile?.role === "admin" && (
-            <View style={styles.adminBadge}>
-              <Text style={styles.adminBadgeText}>👑 Admin</Text>
-            </View>
-          )}
           <TouchableOpacity style={styles.editBtn} onPress={openEdit}>
             <Text style={styles.editBtnText}>✏️ Edit Profil</Text>
           </TouchableOpacity>
@@ -203,15 +198,6 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* Admin link */}
-        {userProfile?.role === "admin" && (
-          <TouchableOpacity
-            style={styles.adminBtn}
-            onPress={() => router.push("/admin")}
-          >
-            <Text style={styles.adminBtnText}>👑 Admin Dashboard</Text>
-          </TouchableOpacity>
-        )}
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
@@ -316,14 +302,6 @@ const styles = StyleSheet.create({
   avatarEmoji: { fontSize: 32, color: "#fff", fontWeight: "800" },
   profileName: { fontSize: 20, fontWeight: "800", color: COLORS.text.primary, marginBottom: 4 },
   profileEmail: { fontSize: 13, color: COLORS.text.muted, marginBottom: 8 },
-  adminBadge: {
-    backgroundColor: "#FEF9C3",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    marginBottom: 12,
-  },
-  adminBadgeText: { fontSize: 12, fontWeight: "700", color: "#CA8A04" },
   editBtn: {
     borderWidth: 1.5,
     borderColor: COLORS.primary,
@@ -400,16 +378,6 @@ const styles = StyleSheet.create({
   menuIcon: { fontSize: 20 },
   menuLabel: { flex: 1, fontSize: 15, fontWeight: "500", color: COLORS.text.primary },
   menuArrow: { fontSize: 16, color: COLORS.text.muted },
-  adminBtn: {
-    backgroundColor: "#FEF9C3",
-    borderRadius: 14,
-    padding: 16,
-    alignItems: "center",
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: "#FDE047",
-  },
-  adminBtnText: { fontSize: 15, fontWeight: "700", color: "#CA8A04" },
   logoutBtn: {
     backgroundColor: "#FEF2F2",
     borderRadius: 14,

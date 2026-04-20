@@ -11,6 +11,7 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -26,12 +27,9 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
-  const [activeRole, setActiveRole] = useState<"user" | "admin">("user");
 
   const { setUser } = useAppStore();
 
-  // We can't conditionally call useQuery with user input, so we query based on email
-  // But we need to trigger this only on submit - use a separate pattern
   const [queryEmail, setQueryEmail] = useState<string | null>(null);
   const userResult = useQuery(
     api.users.getUserByEmail,
@@ -45,17 +43,15 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      // Trigger the query by setting queryEmail
       setQueryEmail(email.trim().toLowerCase());
     } catch {
       setLoading(false);
     }
   };
 
-  // React to userResult changes
   React.useEffect(() => {
     if (queryEmail === null) return;
-    if (userResult === undefined) return; // still loading
+    if (userResult === undefined) return;
 
     const processLogin = async () => {
       if (!userResult) {
@@ -73,30 +69,15 @@ export default function LoginScreen() {
         return;
       }
 
-      // Check if user is trying to login with wrong role
-      if (userResult.role !== activeRole) {
-        Alert.alert(
-          "Akses Ditolak",
-          `Akun ini terdaftar sebagai ${userResult.role}, bukan ${activeRole}.`
-        );
-        setQueryEmail(null);
-        setLoading(false);
-        return;
-      }
-
       await setUser(userResult._id, userResult.name, userResult.role);
       setLoading(false);
       setQueryEmail(null);
 
-      if (userResult.role === "admin") {
-        router.replace("/admin");
-      } else {
-        router.replace("/(tabs)");
-      }
+      router.replace("/(tabs)");
     };
 
     processLogin();
-  }, [userResult, queryEmail, activeRole]);
+  }, [userResult, queryEmail]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -119,28 +100,8 @@ export default function LoginScreen() {
             <Text style={styles.title}>Selamat Datang</Text>
             <Text style={styles.subtitle}>Masuk ke akun kamu</Text>
 
-            {/* Role Selector */}
-            <View style={styles.roleSelector}>
-              <TouchableOpacity
-                style={[styles.roleTab, activeRole === "user" && styles.roleTabActive]}
-                onPress={() => setActiveRole("user")}
-              >
-                <Text style={[styles.roleTabText, activeRole === "user" && styles.roleTabTextActive]}>
-                  👤 User
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.roleTab, activeRole === "admin" && styles.roleTabActive]}
-                onPress={() => setActiveRole("admin")}
-              >
-                <Text style={[styles.roleTabText, activeRole === "admin" && styles.roleTabTextActive]}>
-                  👑 Admin
-                </Text>
-              </TouchableOpacity>
-            </View>
-
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email {activeRole === "admin" ? "Admin" : ""}</Text>
+              <Text style={styles.inputLabel}>Email</Text>
               <View style={styles.inputWrapper}>
                 <Text style={styles.inputIcon}>✉️</Text>
                 <TextInput
@@ -180,7 +141,6 @@ export default function LoginScreen() {
               style={[
                 styles.loginBtn,
                 loading && styles.loginBtnDisabled,
-                activeRole === "admin" && { backgroundColor: "#8B5CF6" }
               ]}
               onPress={handleLogin}
               disabled={loading}
@@ -190,7 +150,7 @@ export default function LoginScreen() {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.loginBtnText}>
-                  Masuk sebagai {activeRole === "admin" ? "Admin" : "User"}
+                  Masuk Sekarang
                 </Text>
               )}
             </TouchableOpacity>
@@ -200,6 +160,18 @@ export default function LoginScreen() {
               <Text style={styles.dividerText}>atau</Text>
               <View style={styles.dividerLine} />
             </View>
+
+            <TouchableOpacity
+              style={styles.googleBtn}
+              onPress={() => Alert.alert("SSO", "Fitur Google Login akan segera hadir!")}
+              activeOpacity={0.7}
+            >
+              <Image 
+                source={require("../../assets/images/google-logo.png")} 
+                style={styles.googleIcon} 
+              />
+              <Text style={styles.googleBtnText}>Lanjutkan dengan Google</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.registerLink}
@@ -363,35 +335,30 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: "700",
   },
-  roleSelector: {
+  googleBtn: {
     flexDirection: "row",
-    backgroundColor: COLORS.background,
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: COLORS.border,
-  },
-  roleTab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderRadius: 8,
-  },
-  roleTabActive: {
-    backgroundColor: COLORS.white,
+    borderRadius: 14,
+    paddingVertical: 14,
+    marginBottom: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  roleTabText: {
-    fontSize: 13,
+  googleIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+  },
+  googleBtnText: {
+    fontSize: 15,
     fontWeight: "600",
-    color: COLORS.text.muted,
-  },
-  roleTabTextActive: {
-    color: COLORS.primary,
+    color: COLORS.text.primary,
   },
 });

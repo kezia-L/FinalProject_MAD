@@ -5,7 +5,7 @@ export interface UserProfile {
   _id: Id<"users">;
   name: string;
   email: string;
-  role: "user" | "admin";
+  role: "user";
   age?: number;
   weight?: number;
   height?: number;
@@ -107,5 +107,5 @@ export interface MealPlanItem {
 }
 
 export type MealType = "breakfast" | "lunch" | "dinner" | "snack";
-export type UserRole = "user" | "admin";
+export type UserRole = "user";
 export type GoalType = "lose_weight" | "maintain" | "gain_muscle" | "be_healthy";
