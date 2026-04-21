@@ -32,6 +32,7 @@ export default defineSchema({
   }).index("by_state", ["state"]),
 
   foods: defineTable({
+    id: v.optional(v.number()),
     name: v.string(),
     calories: v.number(),
     protein: v.number(),
@@ -40,7 +41,8 @@ export default defineSchema({
     fiber: v.optional(v.number()),
     category: v.optional(v.string()),
     isCustom: v.optional(v.boolean()),
-  }),
+    image: v.optional(v.string()),
+  }).searchIndex("search_name", { searchField: "name" }),
 
   foodLogs: defineTable({
     userId: v.id("users"),

@@ -3,11 +3,13 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+import { internal } from "./_generated/api";
+
 const FOOD_ANALYSIS_PROMPT = `Analyze this food image and return ONLY a valid JSON object with exactly these fields:
 {
   "detectedFood": "name of the food in Indonesian",
   "confidence": 0.95,
-  "portionGram": 150,
+  "portionGram": 100,
   "calories": 250,
   "protein": 12,
   "carbs": 35,
@@ -28,14 +30,20 @@ Rules:
 - Return ONLY the JSON, no markdown, no extra text`;
 
 // Helper to get the model or return null if key is missing/invalid
-function getAIModel() {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === "AIzaSyCb1dXGRBt9Kv6UctAQyV8kYLS7x5QX-yI" || apiKey === "MOCK") {
-    // If key is missing or is the placeholder/mock key, return null to trigger mock fallback
+function getAIModel(feature: "scan" | "chat" | "recom") {
+  let apiKey = "";
+  if (feature === "scan") apiKey = process.env.GEMINI_API_KEY_SCAN ?? "";
+  if (feature === "chat") apiKey = process.env.GEMINI_API_KEY_SCAN ?? "";
+  if (feature === "recom") {
+    // FALLBACK: Kunci recom terkena error 403 Forbidden dari Google, jadi kita pinjam kunci scan
+    apiKey = process.env.GEMINI_API_KEY_SCAN ?? "";
+  }
+  
+  if (!apiKey || apiKey === "MOCK") {
     return null;
   }
   const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  return genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 }
 
 export const analyzeFood = action({
@@ -44,27 +52,25 @@ export const analyzeFood = action({
     mimeType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const model = getAIModel();
+    const model = getAIModel("scan");
     const mimeType = args.mimeType ?? "image/jpeg";
 
     if (!model) {
       // MOCK FALLBACK
       console.log("Using Mock for analyzeFood");
       const mockData = {
-        detectedFood: "Nasi Putih",
+        detectedFood: "Abon",
         confidence: 0.92,
-        portionGram: 150,
-        calories: 205,
-        protein: 4.3,
-        carbs: 44.5,
-        fat: 0.4,
-        fiber: 0.6,
+        portionGram: 100,
+        calories: 280,
+        protein: 9.2,
+        carbs: 0,
+        fat: 28.4,
+        fiber: 0,
         healthScore: 3,
-        description: "Nasi putih adalah makanan pokok sumber karbohidrat utama.",
+        description: "Data diambil dari Mock Fallback.",
         healthTips: [
-          "Imbangi dengan sayuran untuk serat",
-          "Tambahkan protein seperti telur atau ayam",
-          "Kontrol porsi jika sedang diet"
+          "Imbangi dengan sayuran untuk serat"
         ]
       };
       return { success: true, data: mockData, rawResponse: JSON.stringify(mockData) };
@@ -84,6 +90,29 @@ export const analyzeFood = action({
       const text = result.response.text();
       const cleaned = text.replace(/```json\n?|```/g, "").trim();
       const parsed = JSON.parse(cleaned);
+      
+      // DATABASE OVERRIDE
+      // We look up the food in the database
+      const dbFood = await ctx.runQuery(internal.foods.searchFoodByName, { 
+        name: parsed.detectedFood
+      });
+
+      if (dbFood) {
+        // If found in DB, override the AI's hallucinated macros with accurate dataset values!
+        // We assume dataset values are per 100g, so if the AI estimated portion is 100g, it matches nicely.
+        // If portionGram is different, we adjust it relative to 100g.
+        
+        const multiplier = parsed.portionGram / 100;
+        
+        parsed.detectedFood = dbFood.name; // Use accurate name
+        parsed.calories = Math.round(dbFood.calories * multiplier);
+        parsed.protein = Number((dbFood.protein * multiplier).toFixed(1));
+        parsed.carbs = Number((dbFood.carbs * multiplier).toFixed(1));
+        parsed.fat = Number((dbFood.fat * multiplier).toFixed(1));
+        parsed.description = `Data divalidasi dari Database Nutrisi (kecocokan: ${dbFood.name}). AI mengestimasi porsi ${parsed.portionGram}g.`;
+      } else {
+        parsed.description = parsed.description + " (Data estimasi AI, tidak ditemukan di database)";
+      }
 
       return { success: true, data: parsed, rawResponse: cleaned };
     } catch (error: any) {
@@ -112,7 +141,7 @@ export const chatWithAI = action({
     ),
   },
   handler: async (ctx, args) => {
-    const model = getAIModel();
+    const model = getAIModel("chat");
     const lastMessage = args.messages[args.messages.length - 1].parts[0].text;
 
     if (!model) {
@@ -156,7 +185,7 @@ export const generateMealPlan = action({
     }),
   },
   handler: async (ctx, args) => {
-    const model = getAIModel();
+    const model = getAIModel("recom");
     const targetCal = args.userProfile.dailyCalorieTarget ?? 2000;
 
     if (!model) {
