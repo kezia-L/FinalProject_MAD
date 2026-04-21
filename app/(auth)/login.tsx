@@ -1,5 +1,5 @@
 // app/(auth)/login.tsx
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -15,28 +15,113 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
+import * as WebBrowser from "expo-web-browser";
+import * as Crypto from "expo-crypto";
+import { makeRedirectUri } from "expo-auth-session";
 import { api } from "../../convex/_generated/api";
 import { COLORS } from "../../lib/constants";
 import { verifyPassword } from "../../lib/auth";
 import { useAppStore } from "../../store/useAppStore";
+
+// Agar popup OAuth bisa menutup otomatis setelah selesai
+WebBrowser.maybeCompleteAuthSession();
+
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
   const { setUser } = useAppStore();
 
+  // Untuk email/password login
   const [queryEmail, setQueryEmail] = useState<string | null>(null);
   const userResult = useQuery(
     api.users.getUserByEmail,
     queryEmail ? { email: queryEmail } : "skip"
   );
 
+  // State untuk melacak OAuth session
+  const [oauthState, setOauthState] = useState<string | null>(null);
+
+  // Poll ke Convex untuk mengecek session setiap saat
+  const sessionResult = useQuery(
+    api.googleAuth.checkSession,
+    oauthState ? { state: oauthState } : "skip"
+  );
+  const deleteSession = useMutation(api.googleAuth.deleteSession);
+
+  // Jika sessionResult ada datanya, artinya user sudah selesai login di browser
+  useEffect(() => {
+    if (sessionResult && oauthState) {
+      const processSession = async () => {
+        try {
+          await setUser(sessionResult.userId, sessionResult.name, sessionResult.role);
+          await deleteSession({ state: oauthState });
+          router.replace("/(tabs)");
+        } catch (error) {
+          console.error("Gagal simpan session:", error);
+          Alert.alert("Error", "Gagal menyelesaikan proses login.");
+        } finally {
+          setGoogleLoading(false);
+          setOauthState(null);
+        }
+      };
+      processSession();
+    }
+  }, [sessionResult, oauthState, router, setUser, deleteSession]);
+
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleLoading(true);
+
+      // Buat state random yang unik untuk session ini
+      const sessionId = Crypto.randomUUID();
+      setOauthState(sessionId);
+
+      // Pastikan clientId dan siteUrl tersedia
+      const clientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
+      const siteUrl = process.env.EXPO_PUBLIC_CONVEX_SITE_URL;
+
+      if (!clientId || !siteUrl) {
+        throw new Error("Client ID atau Site URL tidak ditemukan di .env");
+      }
+
+      // Generate deep link URI supaya browser bisa mengarah kembali ke app
+      const returnUri = makeRedirectUri({ scheme: "finalmad" });
+      
+      // Kirim sessionId dan returnUri ke dalam 'state' param
+      const stateObj = { id: sessionId, returnUri };
+      const encodedState = btoa(JSON.stringify(stateObj));
+
+      const redirectUri = `${siteUrl}/auth/google/callback`;
+
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(
+        redirectUri
+      )}&response_type=code&scope=openid%20profile%20email&state=${encodedState}`;
+
+      // Buka browser, tapi menggunakan openAuthSessionAsync
+      // Browser akan otomatis tertutup ketika diarahkan ke returnUri
+      await WebBrowser.openAuthSessionAsync(authUrl, returnUri);
+
+      // Setelah kembali ke app, kita akan menunggu sessionResult berubah
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Gagal", "Tidak dapat membuka halaman login Google.");
+      setGoogleLoading(false);
+      setOauthState(null);
+    }
+  };
+
+  // ================================================
+  // EMAIL / PASSWORD HANDLER
+  // ================================================
   const handleLogin = async () => {
+
     if (!email.trim() || !password.trim()) {
       Alert.alert("Error", "Email dan password harus diisi");
       return;
@@ -49,13 +134,24 @@ export default function LoginScreen() {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (queryEmail === null) return;
     if (userResult === undefined) return;
 
     const processLogin = async () => {
       if (!userResult) {
         Alert.alert("Login Gagal", "Email tidak terdaftar");
+        setQueryEmail(null);
+        setLoading(false);
+        return;
+      }
+
+      // User Google tidak punya passwordHash, tolak login via password
+      if (!userResult.passwordHash) {
+        Alert.alert(
+          "Login Gagal",
+          "Akun ini terdaftar via Google. Gunakan tombol 'Lanjutkan dengan Google'."
+        );
         setQueryEmail(null);
         setLoading(false);
         return;
@@ -162,15 +258,22 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity
-              style={styles.googleBtn}
-              onPress={() => Alert.alert("SSO", "Fitur Google Login akan segera hadir!")}
+              style={[styles.googleBtn, googleLoading && styles.loginBtnDisabled]}
+              onPress={handleGoogleLogin}
               activeOpacity={0.7}
+              disabled={googleLoading}
             >
-              <Image 
-                source={require("../../assets/images/google-logo.png")} 
-                style={styles.googleIcon} 
-              />
-              <Text style={styles.googleBtnText}>Lanjutkan dengan Google</Text>
+              {googleLoading ? (
+                <ActivityIndicator color={COLORS.text.primary} size="small" />
+              ) : (
+                <>
+                  <Image
+                    source={require("../../assets/images/google-logo.png")}
+                    style={styles.googleIcon}
+                  />
+                  <Text style={styles.googleBtnText}>Lanjutkan dengan Google</Text>
+                </>
+              )}
             </TouchableOpacity>
 
             <TouchableOpacity

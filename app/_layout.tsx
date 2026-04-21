@@ -8,7 +8,7 @@ import { useAppStore } from "../store/useAppStore";
 const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
 
 function RootLayoutNav() {
-  const { userId, userRole, isLoaded, loadFromStorage } = useAppStore();
+  const { userId, isLoaded, loadFromStorage } = useAppStore();
   const router = useRouter();
   const segments = useSegments();
 

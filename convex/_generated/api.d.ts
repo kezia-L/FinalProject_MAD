@@ -11,6 +11,8 @@
 import type * as aiRecommend from "../aiRecommend.js";
 import type * as foodLogs from "../foodLogs.js";
 import type * as foods from "../foods.js";
+import type * as googleAuth from "../googleAuth.js";
+import type * as http from "../http.js";
 import type * as scanHistory from "../scanHistory.js";
 import type * as users from "../users.js";
 
@@ -24,6 +26,8 @@ declare const fullApi: ApiFromModules<{
   aiRecommend: typeof aiRecommend;
   foodLogs: typeof foodLogs;
   foods: typeof foods;
+  googleAuth: typeof googleAuth;
+  http: typeof http;
   scanHistory: typeof scanHistory;
   users: typeof users;
 }>;

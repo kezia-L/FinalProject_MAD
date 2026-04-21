@@ -2,6 +2,79 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
+// =============================================
+// GOOGLE SSO — expo-auth-session (Expo Go compatible)
+// =============================================
+
+/**
+ * Dipanggil setelah user login dengan Google via expo-auth-session.
+ * Menerima googleId, name, email dari Google OAuth response.
+ * cocok untuk testing di Expo Go.
+ */
+export const upsertGoogleUser = mutation({
+  args: {
+    googleId: v.string(),   // sub field dari Google ID token
+    name: v.string(),
+    email: v.string(),
+    picture: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const tokenIdentifier = `google:${args.googleId}`;
+
+    // Cek apakah user sudah ada (by googleId)
+    const existingByToken = await ctx.db
+      .query("users")
+      .withIndex("by_tokenIdentifier", (q) =>
+        q.eq("tokenIdentifier", tokenIdentifier)
+      )
+      .unique();
+
+    if (existingByToken) {
+      // Update data terbaru dari Google
+      await ctx.db.patch(existingByToken._id, {
+        name: args.name,
+        picture: args.picture,
+      });
+      return { userId: existingByToken._id, role: existingByToken.role };
+    }
+
+    // Cek apakah email sudah terdaftar via email/password
+    const existingByEmail = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", args.email.toLowerCase()))
+      .unique();
+
+    if (existingByEmail) {
+      // Hubungkan akun Google ke akun email yang sudah ada
+      await ctx.db.patch(existingByEmail._id, {
+        tokenIdentifier,
+        picture: args.picture,
+        authProvider: "google",
+      });
+      return { userId: existingByEmail._id, role: existingByEmail.role };
+    }
+
+    // User baru — buat record baru
+    const userId = await ctx.db.insert("users", {
+      name: args.name,
+      email: args.email.toLowerCase(),
+      role: "user",
+      tokenIdentifier,
+      picture: args.picture,
+      authProvider: "google",
+      dailyCalorieTarget: 2000,
+      createdAt: Date.now(),
+    });
+
+    return { userId, role: "user" };
+  },
+});
+
+// =============================================
+// EMAIL / PASSWORD AUTH (existing)
+// =============================================
+
+
 export const register = mutation({
   args: {
     name: v.string(),

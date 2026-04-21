@@ -6,7 +6,7 @@ export default defineSchema({
   users: defineTable({
     name: v.string(),
     email: v.string(),
-    passwordHash: v.string(),
+    passwordHash: v.optional(v.string()),
     role: v.string(),
     age: v.optional(v.number()),
     weight: v.optional(v.number()),
@@ -14,7 +14,22 @@ export default defineSchema({
     goal: v.optional(v.string()),
     dailyCalorieTarget: v.optional(v.number()),
     createdAt: v.number(),
-  }).index("by_email", ["email"]),
+    tokenIdentifier: v.optional(v.string()),
+    picture: v.optional(v.string()),
+    authProvider: v.optional(v.string()),
+  })
+    .index("by_email", ["email"])
+    .index("by_tokenIdentifier", ["tokenIdentifier"]),
+
+  // Tabel sementara untuk menyimpan session Google OAuth
+  // Data disimpan setelah Convex HTTP callback menerima dari Google
+  googleSessions: defineTable({
+    state: v.string(),       // random state yang dibuat app, dipakai sebagai key
+    userId: v.id("users"),
+    name: v.string(),
+    role: v.string(),
+    createdAt: v.number(),
+  }).index("by_state", ["state"]),
 
   foods: defineTable({
     name: v.string(),
