@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation } from "convex/react";
 import * as WebBrowser from "expo-web-browser";
 import * as Crypto from "expo-crypto";
@@ -228,7 +229,7 @@ export default function LoginScreen() {
                   editable={!loading}
                 />
                 <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
-                  <Text style={styles.eyeIcon}>{showPass ? "🙈" : "👁️"}</Text>
+                  <Ionicons name={showPass ? "eye-off-outline" : "eye-outline"} size={20} color={COLORS.text.secondary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -268,7 +269,7 @@ export default function LoginScreen() {
               ) : (
                 <>
                   <Image
-                    source={require("../../assets/images/google-logo.png")}
+                    source={require("../../assets/images/google-logo-color.png")}
                     style={styles.googleIcon}
                   />
                   <Text style={styles.googleBtnText}>Lanjutkan dengan Google</Text>

@@ -61,18 +61,26 @@ export const searchFoodByName = internalQuery({
       .take(5);
 
     if (searchResults.length > 0) {
-      // Find exact match if possible, or fall back to the first best match
+      // Prioritas 1: Cari yang namanya sama persis
       const exactMatch = searchResults.find(
         (f) => f.name.toLowerCase() === args.name.toLowerCase()
       );
-      return exactMatch ?? searchResults[0];
+      if (exactMatch) return exactMatch;
+
+      // Prioritas 2: Cari yang mengandung kata utuh (misal AI: "Apel", DB: "Apel segar")
+      const partialMatch = searchResults.find(
+        (f) => f.name.toLowerCase().includes(args.name.toLowerCase()) || args.name.toLowerCase().includes(f.name.toLowerCase())
+      );
+      if (partialMatch) return partialMatch;
+
+      // Jika tidak ada yang cocok sama sekali (misal AI cari Nasi Padang, DB cuma ada Soto Padang)
+      // Kembalikan null agar AI yang mengestimasi kalorinya
+      return null;
     }
     
-    // Fallback: If search index fails (sometimes takes a moment to index new data),
-    // do a simple filter over the first few hundred entries looking for a substring match.
-    // In production, full-text search is sufficient.
+    // Fallback: pencarian manual
     const allFoods = await ctx.db.query("foods").take(1500);
-    const match = allFoods.find((f) => f.name.toLowerCase().includes(args.name.toLowerCase()));
+    const match = allFoods.find((f) => f.name.toLowerCase() === args.name.toLowerCase() || f.name.toLowerCase().includes(args.name.toLowerCase()));
     
     return match ?? null;
   },
