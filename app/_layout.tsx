@@ -44,7 +44,7 @@ function RootLayoutNav() {
         <Stack.Screen name="meal-plan" options={{ presentation: "modal" }} />
         <Stack.Screen name="scan_result/[id]" />
       </Stack>
-      <ChatBubble />
+      {segments[0] !== "(auth)" && <ChatBubble />}
     </>
   );
 }

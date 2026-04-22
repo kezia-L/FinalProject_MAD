@@ -185,11 +185,12 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           {/* Logo */}
           <View style={styles.logoContainer}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoEmoji}>🥗</Text>
-            </View>
-            <Text style={styles.appName}>HealthMate</Text>
-            <Text style={styles.tagline}>Hidup Sehat Dimulai dari Piring</Text>
+            <Image
+              source={require("../../assets/images/HealthMate.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.tagline}>Kenali Nutrisimu, Jaga Kesehatanmu</Text>
           </View>
 
           {/* Card */}
@@ -200,7 +201,7 @@ export default function LoginScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Email</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>✉️</Text>
+                <Ionicons name="mail-outline" size={20} color={COLORS.text.secondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="email@contoh.com"
@@ -218,7 +219,7 @@ export default function LoginScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Password</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>🔒</Text>
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.text.secondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Masukkan password"
@@ -307,22 +308,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 32,
   },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 8,
+  logoImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: "hidden",
     marginBottom: 12,
-  },
-  logoEmoji: {
-    fontSize: 36,
   },
   appName: {
     fontSize: 28,
@@ -377,7 +368,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   inputIcon: {
-    fontSize: 16,
     marginRight: 8,
   },
   input: {

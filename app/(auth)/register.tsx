@@ -11,12 +11,14 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import { COLORS, GOAL_OPTIONS } from "../../lib/constants";
+import { COLORS } from "../../lib/constants";
 import { hashPassword } from "../../lib/auth";
 import { useAppStore } from "../../store/useAppStore";
 
@@ -29,7 +31,6 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [selectedGoal, setSelectedGoal] = useState("be_healthy");
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
 
@@ -58,7 +59,7 @@ export default function RegisterScreen() {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         passwordHash,
-        goal: selectedGoal,
+        goal: "be_healthy", // Default goal
       });
 
       await setUser(result.userId, name.trim(), "user");
@@ -78,22 +79,24 @@ export default function RegisterScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          {/* Header */}
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Text style={styles.backText}>← Kembali</Text>
-          </TouchableOpacity>
-
-          <View style={styles.header}>
-            <Text style={styles.title}>Buat Akun Baru</Text>
-            <Text style={styles.subtitle}>Bergabunglah dan mulai perjalanan sehat kamu</Text>
+          {/* Logo */}
+          <View style={styles.logoContainer}>
+            <Image
+              source={require("../../assets/images/HealthMate.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.tagline}>Kenali Nutrisimu, Jaga Kesehatanmu</Text>
           </View>
 
           <View style={styles.card}>
+            <Text style={styles.title}>Buat Akun Baru</Text>
+            <Text style={styles.subtitle}>Bergabunglah dan mulai perjalanan sehat kamu</Text>
             {/* Name */}
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Nama Lengkap</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>👤</Text>
+                <Ionicons name="person-outline" size={20} color={COLORS.text.secondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Nama kamu"
@@ -110,7 +113,7 @@ export default function RegisterScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Email</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>✉️</Text>
+                <Ionicons name="mail-outline" size={20} color={COLORS.text.secondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="email@contoh.com"
@@ -129,7 +132,7 @@ export default function RegisterScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Password</Text>
               <View style={styles.inputWrapper}>
-                <Text style={styles.inputIcon}>🔒</Text>
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.text.secondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Minimal 6 karakter"
@@ -140,7 +143,7 @@ export default function RegisterScreen() {
                   editable={!loading}
                 />
                 <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
-                  <Text>{showPass ? "🙈" : "👁️"}</Text>
+                  <Ionicons name={showPass ? "eye-off-outline" : "eye-outline"} size={20} color={COLORS.text.secondary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -152,7 +155,7 @@ export default function RegisterScreen() {
                 styles.inputWrapper,
                 confirmPassword && confirmPassword !== password && styles.inputError
               ]}>
-                <Text style={styles.inputIcon}>🔐</Text>
+                <Ionicons name="lock-closed-outline" size={20} color={COLORS.text.secondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder="Ulangi password"
@@ -166,33 +169,6 @@ export default function RegisterScreen() {
               {confirmPassword && confirmPassword !== password && (
                 <Text style={styles.errorText}>Password tidak cocok</Text>
               )}
-            </View>
-
-            {/* Goal Selection */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Tujuan Kesehatan</Text>
-              <View style={styles.goalGrid}>
-                {GOAL_OPTIONS.map((goal) => (
-                  <TouchableOpacity
-                    key={goal.id}
-                    style={[
-                      styles.goalCard,
-                      selectedGoal === goal.id && styles.goalCardActive,
-                    ]}
-                    onPress={() => setSelectedGoal(goal.id)}
-                  >
-                    <Text style={styles.goalIcon}>{goal.icon}</Text>
-                    <Text
-                      style={[
-                        styles.goalLabel,
-                        selectedGoal === goal.id && styles.goalLabelActive,
-                      ]}
-                    >
-                      {goal.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
             </View>
 
             <TouchableOpacity
@@ -233,20 +209,25 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
   },
-  backBtn: {
-    paddingVertical: 8,
-    marginBottom: 8,
+
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 32,
   },
-  backText: {
-    color: COLORS.primary,
-    fontSize: 15,
-    fontWeight: "600",
+  logoImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    overflow: "hidden",
+    marginBottom: 12,
   },
-  header: {
-    marginBottom: 24,
+  tagline: {
+    fontSize: 13,
+    color: COLORS.text.secondary,
+    marginTop: 4,
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "800",
     color: COLORS.text.primary,
     marginBottom: 4,
@@ -254,6 +235,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: COLORS.text.muted,
+    marginBottom: 24,
   },
   card: {
     backgroundColor: COLORS.white,
@@ -289,7 +271,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.danger,
   },
   inputIcon: {
-    fontSize: 16,
     marginRight: 8,
   },
   input: {
@@ -305,37 +286,6 @@ const styles = StyleSheet.create({
     color: COLORS.danger,
     fontSize: 12,
     marginTop: 4,
-  },
-  goalGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  goalCard: {
-    width: "48%",
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: "center",
-    backgroundColor: COLORS.background,
-  },
-  goalCardActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: "#F0FDF4",
-  },
-  goalIcon: {
-    fontSize: 24,
-    marginBottom: 6,
-  },
-  goalLabel: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: COLORS.text.secondary,
-    textAlign: "center",
-  },
-  goalLabelActive: {
-    color: COLORS.primary,
   },
   registerBtn: {
     backgroundColor: COLORS.primary,
