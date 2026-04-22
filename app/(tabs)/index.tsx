@@ -75,9 +75,6 @@ export default function DashboardScreen() {
             <Text style={styles.greeting}>{greeting()}, 👋</Text>
             <Text style={styles.userName}>{userName ?? "Pengguna"}</Text>
           </View>
-          <TouchableOpacity style={styles.chatBtn} onPress={() => router.push("/ai-chat")}>
-            <Text style={styles.chatBtnText}>🤖 AI</Text>
-          </TouchableOpacity>
         </View>
 
         {/* Calorie Ring Card */}
@@ -223,13 +220,6 @@ const styles = StyleSheet.create({
   },
   greeting: { fontSize: 13, color: COLORS.text.muted },
   userName: { fontSize: 22, fontWeight: "800", color: COLORS.text.primary },
-  chatBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  chatBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
   card: {
     backgroundColor: COLORS.white,
     borderRadius: 20,

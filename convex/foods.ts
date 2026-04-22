@@ -26,6 +26,7 @@ export const addFood = mutation({
     fiber: v.optional(v.number()),
     category: v.optional(v.string()),
     isCustom: v.optional(v.boolean()),
+    image: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("foods", {
@@ -37,6 +38,7 @@ export const addFood = mutation({
       fiber: args.fiber,
       category: args.category ?? "custom",
       isCustom: args.isCustom ?? true,
+      image: args.image,
     });
   },
 });
@@ -73,5 +75,16 @@ export const searchFoodByName = internalQuery({
     const match = allFoods.find((f) => f.name.toLowerCase().includes(args.name.toLowerCase()));
     
     return match ?? null;
+  },
+});
+
+export const updateFoodImage = mutation({
+  args: { 
+    id: v.id("foods"),
+    image: v.string() 
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, { image: args.image });
+    return true;
   },
 });

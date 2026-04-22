@@ -7,6 +7,8 @@ import { useAppStore } from "../store/useAppStore";
 
 const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!);
 
+import { ChatBubble } from "../components/ChatBubble";
+
 function RootLayoutNav() {
   const { userId, isLoaded, loadFromStorage } = useAppStore();
   const router = useRouter();
@@ -42,6 +44,7 @@ function RootLayoutNav() {
         <Stack.Screen name="meal-plan" options={{ presentation: "modal" }} />
         <Stack.Screen name="scan_result/[id]" />
       </Stack>
+      <ChatBubble />
     </>
   );
 }

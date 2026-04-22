@@ -78,5 +78,6 @@ export default defineSchema({
     aiAnalysis: v.string(),
     scanTimestamp: v.number(),
     isSaved: v.boolean(),
+    imageStorageId: v.optional(v.id("_storage")),
   }).index("by_userId", ["userId"]),
 });

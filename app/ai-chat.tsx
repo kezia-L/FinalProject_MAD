@@ -15,12 +15,7 @@ import { Id } from "../convex/_generated/dataModel";
 
 export default function AIChatScreen() {
   const router = useRouter();
-  const { userId } = useAppStore();
-  const [messages, setMessages] = useState<ChatMessage[]>([{
-    role: "assistant",
-    content: "Halo! Saya HealthMate AI 🤖\n\nSiap membantu pertanyaan seputar nutrisi, diet, dan kesehatan kamu!",
-    timestamp: Date.now(),
-  }]);
+  const { userId, chatMessages, addMessage, setMessages, clearChat } = useAppStore();
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -29,17 +24,23 @@ export default function AIChatScreen() {
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return;
+    
     const userMsg: ChatMessage = { role: "user", content: text.trim(), timestamp: Date.now() };
-    setMessages(prev => [...prev, userMsg]);
+    await addMessage(userMsg);
+    
     setInputText("");
     setIsLoading(true);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+
     try {
-      const history = messages.slice(1).map(m => ({
+      // History excluding the very first welcome message for the AI context if desired, 
+      // but here we send all messages.
+      const history = chatMessages.map(m => ({
         role: m.role === "user" ? "user" as const : "model" as const,
         parts: [{ text: m.content }],
       }));
       history.push({ role: "user", parts: [{ text: text.trim() }] });
+
       const result = await chatWithAI({
         messages: history,
         userProfile: userProfile ? {
@@ -47,19 +48,27 @@ export default function AIChatScreen() {
           weight: userProfile.weight, height: userProfile.height, age: userProfile.age,
         } : undefined,
       });
-      setMessages(prev => [...prev, {
-        role: "assistant", content: result.response ?? "Maaf, tidak bisa memproses.", timestamp: Date.now(),
-      }]);
+
+      const assistantMsg: ChatMessage = {
+        role: "assistant", 
+        content: result.response ?? "Maaf, tidak bisa memproses.", 
+        timestamp: Date.now(),
+      };
+      await addMessage(assistantMsg);
+
     } catch (err: any) {
       console.error(err);
       const errorMessage = err.message || "Gagal menghubungi AI. Coba lagi.";
       Alert.alert("Error", errorMessage);
-      setMessages(prev => prev.filter((_, i) => i !== prev.length - 1));
+      
+      // Optional: remove the user message if it failed
+      const rolledBack = chatMessages.filter(m => m.timestamp !== userMsg.timestamp);
+      await setMessages(rolledBack);
     } finally {
       setIsLoading(false);
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
     }
-  }, [isLoading, messages, chatWithAI, userProfile]);
+  }, [isLoading, chatMessages, addMessage, setMessages, chatWithAI, userProfile]);
 
   const formatTime = (ts: number) =>
     new Date(ts).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
@@ -78,12 +87,14 @@ export default function AIChatScreen() {
               <Text style={styles.headerSub}>Asisten nutrisi personal</Text>
             </View>
           </View>
-          <View style={{ width: 36 }} />
+          <TouchableOpacity onPress={clearChat} style={styles.clearBtn}>
+            <Text style={styles.clearText}>Hapus</Text>
+          </TouchableOpacity>
         </View>
 
         <ScrollView ref={scrollRef} style={styles.messageList} contentContainerStyle={styles.messageContent}
           showsVerticalScrollIndicator={false} onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}>
-          {messages.map((msg, i) => (
+          {chatMessages.map((msg, i) => (
             <View key={i} style={[styles.messageRow, msg.role === "user" ? styles.rowUser : styles.rowAI]}>
               {msg.role === "assistant" && (
                 <View style={styles.aiBubbleAvatar}><Text style={{ fontSize: 16 }}>🤖</Text></View>
@@ -146,6 +157,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 15, fontWeight: "700", color: COLORS.text.primary },
   headerSub: { fontSize: 11, color: COLORS.primary },
+  clearBtn: { padding: 8 },
+  clearText: { fontSize: 13, color: COLORS.danger, fontWeight: "600" },
   messageList: { flex: 1 },
   messageContent: { padding: 16, gap: 12 },
   messageRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
