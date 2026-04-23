@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -28,28 +29,57 @@ export default function ScanScreen() {
   const [permission, requestPermission] = useCameraPermissions();
   const [facing] = useState<CameraType>("back");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
 
   const analyzeFood = useAction(api.aiRecommend.analyzeFood);
   const saveScan = useMutation(api.scanHistory.saveScan);
+  const generateUploadUrl = useMutation(api.scanHistory.generateUploadUrl);
 
   const processImage = async (uri: string) => {
     if (!userId) {
       Alert.alert("Error", "Silakan login terlebih dahulu");
       return;
     }
+    setCapturedImage(uri);
     setIsAnalyzing(true);
     try {
       const base64 = await prepareImageForAI(uri);
       const result = await analyzeFood({ imageBase64: base64, mimeType: "image/jpeg" });
 
       if (!result.success || !result.data) {
+        Alert.alert("Analisis Gagal", "Gagal memproses gambar. Coba lagi.");
+        return;
+      }
+
+      if (result.isFood === false) {
         Alert.alert(
-          "Analisis Gagal",
-          "Tidak bisa mengenali makanan. Coba foto yang lebih jelas.",
-          [{ text: "OK" }]
+          "Bukan Makanan",
+          "Maaf, objek ini sepertinya bukan makanan atau minuman. Silakan ambil foto makanan Anda untuk dianalisis.",
+          [{ text: "Coba Lagi", onPress: () => setCapturedImage(null) }]
         );
         return;
+      }
+
+      // UPLOAD IMAGE TO CONVEX
+      let imageStorageId = undefined;
+      try {
+        const uploadUrl = await generateUploadUrl();
+        const imageResponse = await fetch(uri);
+        const imageBlob = await imageResponse.blob();
+        
+        const uploadResponse = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": "image/jpeg" },
+          body: imageBlob,
+        });
+
+        if (uploadResponse.ok) {
+          const { storageId } = await uploadResponse.json();
+          imageStorageId = storageId;
+        }
+      } catch (uploadErr) {
+        console.error("Gagal upload gambar ke storage:", uploadErr);
       }
 
       const food = result.data as FoodAnalysis;
@@ -63,6 +93,7 @@ export default function ScanScreen() {
         fat: food.fat,
         portionGram: food.portionGram,
         aiAnalysis: JSON.stringify(food),
+        imageStorageId: imageStorageId as Id<"_storage"> | undefined,
       });
 
       router.push(`/scan_result/${scanId}`);
@@ -72,7 +103,14 @@ export default function ScanScreen() {
       Alert.alert("Error", errorMessage);
     } finally {
       setIsAnalyzing(false);
+      // Jika gagal, kita biarkan fotonya tertutup agar bisa coba lagi
+      // Jika sukses, router.push akan memindahkan layar sehingga ini tidak masalah
     }
+  };
+
+  const handleCancel = () => {
+    setCapturedImage(null);
+    setIsAnalyzing(false);
   };
 
   const handleCapture = async () => {
@@ -138,12 +176,21 @@ export default function ScanScreen() {
           <Text style={styles.topTitle}>Scan Makanan</Text>
         </SafeAreaView>
 
+        {/* Captured Image Preview during analysis */}
+        {capturedImage && (
+          <Image source={{ uri: capturedImage }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        )}
+
         {/* Analyzing overlay */}
         {isAnalyzing && (
           <View style={styles.analyzingOverlay}>
             <ActivityIndicator size="large" color={COLORS.primary} />
             <Text style={styles.analyzingText}>Menganalisis makanan...</Text>
             <Text style={styles.analyzingSubText}>Mohon tunggu sebentar</Text>
+            
+            <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
+              <Text style={styles.cancelBtnText}>Batalkan</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -283,4 +330,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   galleryBtnText: { color: COLORS.primary, fontWeight: "700", fontSize: 15 },
+  cancelBtn: {
+    marginTop: 30,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
+  },
+  cancelBtnText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
 });

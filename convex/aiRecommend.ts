@@ -1,7 +1,7 @@
 "use node";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { v } from "convex/values";
 import { action } from "./_generated/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { internal } from "./_generated/api";
 
@@ -27,21 +27,18 @@ Rules:
 - healthScore: 1 (very unhealthy) to 5 (very healthy)
 - healthTips: 3 practical tips about this food
 - All text fields must be in Indonesian (Bahasa Indonesia)
-- Return ONLY the JSON, no markdown, no extra text`;
+- Return ONLY the JSON, no markdown, no extra text
+- CRITICAL: If the image does NOT contain any food or drink (e.g. furniture, tools, pets, random objects), set "detectedFood" to "Bukan Makanan", "confidence" to 0, and "description" to "Objek bukan makanan".`;
 
 // Helper to get the model or return null if key is missing/invalid
 function getAIModel(feature: "scan" | "chat" | "recom") {
-  let apiKey = "";
-  if (feature === "scan") apiKey = process.env.GEMINI_API_KEY_SCAN ?? "";
-  if (feature === "chat") apiKey = process.env.GEMINI_API_KEY_SCAN ?? "";
-  if (feature === "recom") {
-    // FALLBACK: Kunci recom terkena error 403 Forbidden dari Google, jadi kita pinjam kunci scan
-    apiKey = process.env.GEMINI_API_KEY_SCAN ?? "";
-  }
+  // Selalu gunakan kunci SCAN dan model Gemma 4 untuk semua fitur sesuai permintaan
+  const apiKey = process.env.GEMINI_API_KEY_SCAN ?? "";
   
   if (!apiKey || apiKey === "MOCK") {
     return null;
   }
+  
   const genAI = new GoogleGenerativeAI(apiKey);
   return genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 }
@@ -91,6 +88,10 @@ export const analyzeFood = action({
       const cleaned = text.replace(/```json\n?|```/g, "").trim();
       const parsed = JSON.parse(cleaned);
       
+      if (parsed.detectedFood === "Bukan Makanan") {
+        return { success: true, isFood: false, data: parsed, rawResponse: cleaned };
+      }
+
       // DATABASE OVERRIDE
       // We look up the food in the database
       const dbFood = await ctx.runQuery(internal.foods.searchFoodByName, { 
@@ -114,7 +115,7 @@ export const analyzeFood = action({
         parsed.description = parsed.description + " (Data estimasi AI, tidak ditemukan di database)";
       }
 
-      return { success: true, data: parsed, rawResponse: cleaned };
+      return { success: true, isFood: true, data: parsed, rawResponse: cleaned };
     } catch (error: any) {
       console.error("AI Analysis Error:", error);
       throw new Error(`Gagal menganalisis gambar: ${error.message}`);

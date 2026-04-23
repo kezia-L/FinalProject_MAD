@@ -76,7 +76,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     if (chatMessages.length === 0) {
       chatMessages = [{
         role: "assistant",
-        content: "Halo! Saya HealthMate AI 🤖\n\nSiap membantu pertanyaan seputar nutrisi, diet, dan kesehatan kamu!",
+        content: "Halo! Saya HealthMate AI ✨\n\nSiap membantu pertanyaan seputar nutrisi, diet, dan kesehatan kamu!",
         timestamp: Date.now(),
       }];
     }
@@ -98,7 +98,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   clearChat: async () => {
     const initialMsg: ChatMessage[] = [{
       role: "assistant",
-      content: "Halo! Saya HealthMate AI 🤖\n\nSiap membantu pertanyaan seputar nutrisi, diet, dan kesehatan kamu!",
+      content: "Halo! Saya HealthMate AI ✨\n\nSiap membantu pertanyaan seputar nutrisi, diet, dan kesehatan kamu!",
       timestamp: Date.now(),
     }];
     set({ chatMessages: initialMsg });

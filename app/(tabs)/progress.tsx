@@ -8,6 +8,7 @@ import {
   Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { COLORS, DEFAULT_DAILY_TARGETS } from "../../lib/constants";
@@ -81,24 +82,35 @@ export default function ProgressScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>📊 Progress Mingguan</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.titleIconCircle}>
+            <Ionicons name="bar-chart" size={20} color={COLORS.primary} />
+          </View>
+          <Text style={styles.title}>Progress Mingguan</Text>
+        </View>
 
         {/* Stats row */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>🔥</Text>
+            <View style={[styles.statIconCircle, { backgroundColor: "#FEF2F2" }]}>
+              <Ionicons name="flame" size={18} color="#EF4444" />
+            </View>
             <Text style={styles.statValue}>{Math.round(totalThisWeek).toLocaleString()}</Text>
-            <Text style={styles.statLabel}>Total kkal minggu ini</Text>
+            <Text style={styles.statLabel}>Total kkal</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>📈</Text>
+            <View style={[styles.statIconCircle, { backgroundColor: "#F0F9FF" }]}>
+              <Ionicons name="trending-up" size={18} color="#0EA5E9" />
+            </View>
             <Text style={styles.statValue}>{avgDaily.toLocaleString()}</Text>
-            <Text style={styles.statLabel}>Rata-rata kkal/hari</Text>
+            <Text style={styles.statLabel}>Rata-rata/hari</Text>
           </View>
           <View style={styles.statCard}>
-            <Text style={styles.statEmoji}>🎯</Text>
+            <View style={[styles.statIconCircle, { backgroundColor: "#FDF4FF" }]}>
+              <Ionicons name="ribbon" size={18} color="#A855F7" />
+            </View>
             <Text style={styles.statValue}>{daysOnTarget}/7</Text>
-            <Text style={styles.statLabel}>Hari sesuai target</Text>
+            <Text style={styles.statLabel}>Target Tercapai</Text>
           </View>
         </View>
 
@@ -198,7 +210,10 @@ export default function ProgressScreen() {
 
         {/* Analysis */}
         <View style={styles.analysisCard}>
-          <Text style={styles.analysisTitle}>💡 Analisis Mingguan</Text>
+          <View style={styles.analysisHeader}>
+            <Ionicons name="bulb-outline" size={20} color="#fff" />
+            <Text style={styles.analysisTitle}>Analisis Mingguan</Text>
+          </View>
           <Text style={styles.analysisText}>{getAnalysis()}</Text>
         </View>
 
@@ -253,39 +268,56 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   container: { padding: 16 },
-  title: { fontSize: 20, fontWeight: "800", color: COLORS.text.primary, marginBottom: 16 },
-  statsRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
+  headerRow: { flexDirection: "row", alignItems: "center", marginBottom: 20, marginTop: 10 },
+  titleIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primaryBg,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  title: { fontSize: 22, fontWeight: "900", color: COLORS.text.primary, letterSpacing: -0.5 },
+  statsRow: { flexDirection: "row", gap: 10, marginBottom: 20 },
   statCard: {
     flex: 1,
     backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 12,
+    borderRadius: 20,
+    padding: 16,
     alignItems: "center",
     borderWidth: 1,
     borderColor: COLORS.border,
-    elevation: 2,
+    elevation: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 10,
   },
-  statEmoji: { fontSize: 22, marginBottom: 4 },
-  statValue: { fontSize: 16, fontWeight: "800", color: COLORS.text.primary },
-  statLabel: { fontSize: 9, color: COLORS.text.muted, textAlign: "center", marginTop: 2 },
+  statIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  statValue: { fontSize: 18, fontWeight: "900", color: COLORS.text.primary, letterSpacing: -0.5 },
+  statLabel: { fontSize: 10, color: COLORS.text.muted, textAlign: "center", marginTop: 4, fontWeight: "600" },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
-    elevation: 2,
+    elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowRadius: 12,
   },
-  cardTitle: { fontSize: 15, fontWeight: "700", color: COLORS.text.primary, marginBottom: 16 },
+  cardTitle: { fontSize: 16, fontWeight: "800", color: COLORS.text.primary, marginBottom: 20, letterSpacing: -0.3 },
   chartContainer: { alignItems: "center" },
   legend: { flexDirection: "row", justifyContent: "center", gap: 16, marginTop: 8 },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
@@ -293,18 +325,29 @@ const styles = StyleSheet.create({
   legendText: { fontSize: 11, color: COLORS.text.muted },
   analysisCard: {
     backgroundColor: COLORS.primary,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+    elevation: 8,
   },
-  analysisTitle: { fontSize: 14, fontWeight: "700", color: "#fff", marginBottom: 8 },
-  analysisText: { fontSize: 13, color: "rgba(255,255,255,0.9)", lineHeight: 20 },
+  analysisHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 8 },
+  analysisTitle: { fontSize: 16, fontWeight: "800", color: "#fff", letterSpacing: -0.3 },
+  analysisText: { fontSize: 14, color: "rgba(255,255,255,0.9)", lineHeight: 22 },
   todayCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 24,
+    padding: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
   },
   todayHeader: {
     flexDirection: "row",

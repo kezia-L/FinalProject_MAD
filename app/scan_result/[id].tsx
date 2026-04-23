@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -111,7 +112,11 @@ export default function ScanResultScreen() {
 
         {/* Food name & confidence */}
         <View style={styles.foodNameCard}>
-          <Text style={styles.foodEmoji}>🍽️</Text>
+          {scan.imageUrl ? (
+            <Image source={{ uri: scan.imageUrl }} style={styles.foodImage} resizeMode="cover" />
+          ) : (
+            <Text style={styles.foodEmoji}>🍽️</Text>
+          )}
           <Text style={styles.foodName}>{scan.detectedFood}</Text>
           <View style={[styles.confidenceBadge, { backgroundColor: confidencePercent >= 80 ? "#D1FAE5" : "#FEF3C7" }]}>
             <Text style={[styles.confidenceText, { color: confidencePercent >= 80 ? COLORS.primary : "#B45309" }]}>
@@ -293,6 +298,14 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
+  },
+  foodImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 12,
+    borderWidth: 3,
+    borderColor: COLORS.primaryBg,
   },
   foodEmoji: { fontSize: 48, marginBottom: 8 },
   foodName: { fontSize: 22, fontWeight: "800", color: COLORS.text.primary, marginBottom: 8, textAlign: "center" },

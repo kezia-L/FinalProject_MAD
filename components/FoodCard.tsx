@@ -18,7 +18,11 @@ export function FoodCard({ log, onDelete, compact = false }: FoodCardProps) {
     <View style={[styles.card, compact && styles.cardCompact]}>
       <View style={styles.left}>
         <View style={[styles.iconContainer, { backgroundColor: mealType?.color + "20" }]}>
-          <Text style={styles.icon}>{mealType?.icon ?? "🍽️"}</Text>
+          <Ionicons
+            name={(mealType as any)?.iconName ?? "restaurant-outline"}
+            size={20}
+            color={mealType?.color ?? COLORS.primary}
+          />
         </View>
         <View style={styles.info}>
           <Text style={styles.foodName} numberOfLines={1}>

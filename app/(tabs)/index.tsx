@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { useQuery } from "convex/react";
+import { Ionicons } from "@expo/vector-icons";
 import { api } from "../../convex/_generated/api";
 import { COLORS, DEFAULT_DAILY_TARGETS, MEAL_TYPES } from "../../lib/constants";
 import { CalorieRing } from "../../components/CalorieRing";
@@ -72,9 +73,12 @@ export default function DashboardScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>{greeting()}, 👋</Text>
+            <Text style={styles.greeting}>{greeting()}</Text>
             <Text style={styles.userName}>{userName ?? "Pengguna"}</Text>
           </View>
+          <TouchableOpacity style={styles.notificationBtn}>
+            <Ionicons name="notifications-outline" size={24} color={COLORS.text.primary} />
+          </TouchableOpacity>
         </View>
 
         {/* Calorie Ring Card */}
@@ -136,14 +140,18 @@ export default function DashboardScreen() {
             style={[styles.quickBtn, { backgroundColor: COLORS.primary }]}
             onPress={() => router.push("/(tabs)/scan")}
           >
-            <Text style={styles.quickBtnIcon}>📷</Text>
+            <View style={styles.quickIconWrapper}>
+              <Ionicons name="camera-outline" size={28} color="#fff" />
+            </View>
             <Text style={styles.quickBtnLabel}>Scan Makanan</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.quickBtn, { backgroundColor: "#6366F1" }]}
             onPress={() => router.push("/meal-plan")}
           >
-            <Text style={styles.quickBtnIcon}>📋</Text>
+            <View style={styles.quickIconWrapper}>
+              <Ionicons name="calendar-outline" size={28} color="#fff" />
+            </View>
             <Text style={styles.quickBtnLabel}>Rencana Makan</Text>
           </TouchableOpacity>
         </View>
@@ -159,7 +167,9 @@ export default function DashboardScreen() {
               const mealCal = mealLogs.reduce((s, l) => s + l.calories, 0);
               return (
                 <View key={meal.id} style={styles.mealChip}>
-                  <Text style={styles.mealChipIcon}>{meal.icon}</Text>
+                  <View style={[styles.mealIconWrapper, { backgroundColor: meal.color + "15" }]}>
+                    <Ionicons name={meal.iconName} size={20} color={meal.color} />
+                  </View>
                   <Text style={styles.mealChipLabel}>{meal.label}</Text>
                   <Text style={[styles.mealChipCal, { color: meal.color }]}>
                     {Math.round(mealCal)} kkal
@@ -188,7 +198,9 @@ export default function DashboardScreen() {
         {/* Empty state */}
         {(todayLogs ?? []).length === 0 && (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>🍽️</Text>
+            <View style={styles.emptyIconCircle}>
+              <Ionicons name="fast-food-outline" size={48} color={COLORS.primary} />
+            </View>
             <Text style={styles.emptyTitle}>Belum ada log hari ini</Text>
             <Text style={styles.emptyDesc}>
               Scan makananmu atau tambah manual lewat Diary
@@ -197,7 +209,8 @@ export default function DashboardScreen() {
               style={styles.emptyBtn}
               onPress={() => router.push("/(tabs)/scan")}
             >
-              <Text style={styles.emptyBtnText}>📷 Scan Sekarang</Text>
+              <Ionicons name="scan-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.emptyBtnText}>Scan Sekarang</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -217,19 +230,30 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
+    marginTop: 10,
   },
-  greeting: { fontSize: 13, color: COLORS.text.muted },
-  userName: { fontSize: 22, fontWeight: "800", color: COLORS.text.primary },
+  greeting: { fontSize: 13, color: COLORS.text.muted, fontWeight: "500" },
+  userName: { fontSize: 24, fontWeight: "900", color: COLORS.text.primary, letterSpacing: -0.5 },
+  notificationBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.white,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 20,
-    marginBottom: 16,
+    marginBottom: 20,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.05,
+    shadowRadius: 15,
+    elevation: 5,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
@@ -237,77 +261,117 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  cardTitle: { fontSize: 16, fontWeight: "700", color: COLORS.text.primary },
-  statusBadge: { borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  statusText: { fontSize: 12, fontWeight: "600" },
-  ringContainer: { alignItems: "center", marginBottom: 20 },
+  cardTitle: { fontSize: 17, fontWeight: "800", color: COLORS.text.primary, letterSpacing: -0.3 },
+  statusBadge: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 6 },
+  statusText: { fontSize: 11, fontWeight: "700", textTransform: "uppercase" },
+  ringContainer: { alignItems: "center", marginBottom: 24 },
   ringStats: {
     flexDirection: "row",
-    marginTop: 16,
+    marginTop: 20,
     backgroundColor: COLORS.background,
-    borderRadius: 12,
-    padding: 12,
-    width: "80%",
+    borderRadius: 16,
+    padding: 16,
+    width: "100%",
   },
   statItem: { flex: 1, alignItems: "center" },
-  statValue: { fontSize: 18, fontWeight: "800", color: COLORS.text.primary },
-  statLabel: { fontSize: 11, color: COLORS.text.muted, marginTop: 2 },
-  statDivider: { width: 1, backgroundColor: COLORS.border, marginHorizontal: 12 },
-  macroSection: { marginTop: 8 },
+  statValue: { fontSize: 20, fontWeight: "900", color: COLORS.text.primary },
+  statLabel: { fontSize: 11, color: COLORS.text.muted, marginTop: 4, fontWeight: "600" },
+  statDivider: { width: 1, backgroundColor: COLORS.border, marginHorizontal: 16 },
+  macroSection: { marginTop: 12 },
   quickActions: {
     flexDirection: "row",
-    gap: 12,
-    marginBottom: 16,
+    gap: 16,
+    marginBottom: 24,
   },
   quickBtn: {
     flex: 1,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 24,
+    padding: 20,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  quickBtnIcon: { fontSize: 28, marginBottom: 4 },
-  quickBtnLabel: { color: "#fff", fontSize: 12, fontWeight: "700" },
-  mealBreakdown: { marginBottom: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: "700", color: COLORS.text.primary, marginBottom: 12 },
-  mealGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  quickIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  quickBtnLabel: { color: "#fff", fontSize: 14, fontWeight: "800", letterSpacing: -0.2 },
+  mealBreakdown: { marginBottom: 24 },
+  sectionTitle: { fontSize: 18, fontWeight: "800", color: COLORS.text.primary, marginBottom: 16, letterSpacing: -0.4 },
+  mealGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   mealChip: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 20,
+    padding: 16,
     alignItems: "center",
     width: "48%",
     borderWidth: 1,
     borderColor: COLORS.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  mealChipIcon: { fontSize: 20, marginBottom: 4 },
-  mealChipLabel: { fontSize: 12, color: COLORS.text.secondary, fontWeight: "500" },
-  mealChipCal: { fontSize: 14, fontWeight: "700", marginTop: 2 },
-  recentSection: { marginBottom: 16 },
-  sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  seeAll: { fontSize: 13, color: COLORS.primary, fontWeight: "600" },
+  mealIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  mealChipLabel: { fontSize: 13, color: COLORS.text.secondary, fontWeight: "600" },
+  mealChipCal: { fontSize: 16, fontWeight: "800", marginTop: 4 },
+  recentSection: { marginBottom: 24 },
+  sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  seeAll: { fontSize: 14, color: COLORS.primary, fontWeight: "700" },
   emptyState: {
     backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 32,
+    borderRadius: 24,
+    padding: 40,
     alignItems: "center",
     borderWidth: 1,
     borderColor: COLORS.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  emptyEmoji: { fontSize: 48, marginBottom: 12 },
-  emptyTitle: { fontSize: 16, fontWeight: "700", color: COLORS.text.primary, marginBottom: 6 },
-  emptyDesc: { fontSize: 13, color: COLORS.text.muted, textAlign: "center", marginBottom: 16 },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: COLORS.primaryBg,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  emptyTitle: { fontSize: 18, fontWeight: "800", color: COLORS.text.primary, marginBottom: 8 },
+  emptyDesc: { fontSize: 14, color: COLORS.text.muted, textAlign: "center", marginBottom: 24, lineHeight: 20 },
   emptyBtn: {
     backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    borderRadius: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  emptyBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
+  emptyBtnText: { color: "#fff", fontWeight: "800", fontSize: 15 },
 });

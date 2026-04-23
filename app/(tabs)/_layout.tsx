@@ -1,20 +1,27 @@
 // app/(tabs)/_layout.tsx
 import { Tabs } from "expo-router";
 import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { COLORS } from "../../lib/constants";
 
 function TabIcon({
-  emoji,
+  iconOutline,
+  iconFilled,
   label,
   focused,
 }: {
-  emoji: string;
+  iconOutline: keyof typeof Ionicons.glyphMap;
+  iconFilled: keyof typeof Ionicons.glyphMap;
   label: string;
   focused: boolean;
 }) {
   return (
     <View style={[styles.tabItem, focused && styles.tabItemActive]}>
-      <Text style={styles.tabEmoji}>{emoji}</Text>
+      <Ionicons
+        name={focused ? iconFilled : iconOutline}
+        size={22}
+        color={focused ? COLORS.primary : COLORS.text.muted}
+      />
       <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>{label}</Text>
     </View>
   );
@@ -33,7 +40,7 @@ export default function TabLayout() {
         name="index"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🏠" label="Beranda" focused={focused} />
+            <TabIcon iconOutline="home-outline" iconFilled="home" label="Beranda" focused={focused} />
           ),
         }}
       />
@@ -41,7 +48,7 @@ export default function TabLayout() {
         name="diary"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="📓" label="Diary" focused={focused} />
+            <TabIcon iconOutline="book-outline" iconFilled="book" label="Diary" focused={focused} />
           ),
         }}
       />
@@ -50,7 +57,7 @@ export default function TabLayout() {
         options={{
           tabBarIcon: ({ focused }) => (
             <View style={styles.scanBtn}>
-              <Text style={styles.scanEmoji}>📷</Text>
+              <Ionicons name="scan-outline" size={26} color="#fff" />
             </View>
           ),
         }}
@@ -59,7 +66,7 @@ export default function TabLayout() {
         name="progress"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="📊" label="Progress" focused={focused} />
+            <TabIcon iconOutline="bar-chart-outline" iconFilled="bar-chart" label="Progress" focused={focused} />
           ),
         }}
       />
@@ -67,7 +74,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="👤" label="Profil" focused={focused} />
+            <TabIcon iconOutline="person-outline" iconFilled="person" label="Profil" focused={focused} />
           ),
         }}
       />
@@ -100,9 +107,7 @@ const styles = StyleSheet.create({
   tabItemActive: {
     backgroundColor: COLORS.primaryBg,
   },
-  tabEmoji: {
-    fontSize: 22,
-  },
+
   tabLabel: {
     fontSize: 10,
     color: COLORS.text.muted,
@@ -127,7 +132,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  scanEmoji: {
-    fontSize: 26,
-  },
+
 });

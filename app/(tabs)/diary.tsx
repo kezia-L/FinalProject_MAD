@@ -9,6 +9,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { COLORS, MEAL_TYPES } from "../../lib/constants";
@@ -91,7 +92,12 @@ export default function DiaryScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>📓 Diary Makanan</Text>
+        <View style={styles.headerTitleRow}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="book" size={20} color={COLORS.primary} />
+          </View>
+          <Text style={styles.title}>Diary Makanan</Text>
+        </View>
         <Text style={styles.dateLabel}>{formatDate(selectedDate)}</Text>
       </View>
 
@@ -161,7 +167,9 @@ export default function DiaryScreen() {
             <View key={mealType.id} style={styles.mealSection}>
               <View style={styles.mealHeader}>
                 <View style={styles.mealTitleRow}>
-                  <Text style={styles.mealIcon}>{mealType.icon}</Text>
+                  <View style={[styles.mealIconCircle, { backgroundColor: mealType.color + "15" }]}>
+                    <Ionicons name={mealType.iconName} size={18} color={mealType.color} />
+                  </View>
                   <Text style={styles.mealName}>{mealType.label}</Text>
                   {mealLogs.length > 0 && (
                     <View style={[styles.mealCalBadge, { backgroundColor: mealType.color + "20" }]}>
@@ -194,9 +202,19 @@ export default function DiaryScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-  title: { fontSize: 20, fontWeight: "800", color: COLORS.text.primary },
-  dateLabel: { fontSize: 13, color: COLORS.text.muted, marginTop: 2 },
+  header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
+  headerTitleRow: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primaryBg,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  title: { fontSize: 22, fontWeight: "900", color: COLORS.text.primary, letterSpacing: -0.5 },
+  dateLabel: { fontSize: 14, color: COLORS.text.muted, fontWeight: "500" },
   datePicker: { maxHeight: 80 },
   datePickerContent: {
     paddingHorizontal: 12,
@@ -255,10 +273,16 @@ const styles = StyleSheet.create({
   mealTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
   },
-  mealIcon: { fontSize: 20 },
-  mealName: { fontSize: 15, fontWeight: "700", color: COLORS.text.primary, flex: 1 },
+  mealIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  mealName: { fontSize: 16, fontWeight: "800", color: COLORS.text.primary, flex: 1, letterSpacing: -0.3 },
   mealCalBadge: {
     borderRadius: 12,
     paddingHorizontal: 10,

@@ -12,6 +12,7 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -114,9 +115,9 @@ export default function ProfileScreen() {
   const goalInfo = GOAL_OPTIONS.find((g) => g.id === (userProfile?.goal ?? "be_healthy"));
 
   const menuItems = [
-    { icon: "📋", label: "Rencana Makan AI", onPress: () => router.push("/meal-plan") },
-    { icon: "🤖", label: "Chat dengan AI", onPress: () => router.push("/ai-chat") },
-    { icon: "📊", label: "Progress Mingguan", onPress: () => router.push("/(tabs)/progress") },
+    { icon: "restaurant-outline", color: "#F59E0B", label: "Rencana Makan AI", onPress: () => router.push("/meal-plan") },
+    { icon: "chatbubble-ellipses-outline", color: "#6366F1", label: "Chat dengan AI", onPress: () => router.push("/ai-chat") },
+    { icon: "bar-chart-outline", color: "#16A34A", label: "Progress Mingguan", onPress: () => router.push("/(tabs)/progress") },
   ];
 
   return (
@@ -132,7 +133,8 @@ export default function ProfileScreen() {
           <Text style={styles.profileName}>{userProfile?.name ?? "..."}</Text>
           <Text style={styles.profileEmail}>{userProfile?.email ?? ""}</Text>
           <TouchableOpacity style={styles.editBtn} onPress={openEdit}>
-            <Text style={styles.editBtnText}>✏️ Edit Profil</Text>
+            <Ionicons name="pencil" size={14} color={COLORS.primary} style={{ marginRight: 6 }} />
+            <Text style={styles.editBtnText}>Edit Profil</Text>
           </TouchableOpacity>
         </View>
 
@@ -169,8 +171,10 @@ export default function ProfileScreen() {
         {/* Goal & Calorie target */}
         <View style={styles.goalCard}>
           <View style={styles.goalRow}>
-            <Text style={styles.goalIcon}>{goalInfo?.icon ?? "🎯"}</Text>
-            <View>
+            <View style={[styles.goalIconCircle, { backgroundColor: (goalInfo as any)?.color ? (goalInfo as any).color + "15" : COLORS.primaryBg }]}>
+              <Ionicons name={(goalInfo as any)?.iconName ?? "leaf-outline"} size={24} color={(goalInfo as any)?.color ?? COLORS.primary} />
+            </View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.goalTitle}>{goalInfo?.label ?? "Tujuan Kesehatan"}</Text>
               <Text style={styles.goalDesc}>{goalInfo?.description}</Text>
             </View>
@@ -191,9 +195,11 @@ export default function ProfileScreen() {
               style={[styles.menuItem, i < menuItems.length - 1 && styles.menuItemBorder]}
               onPress={item.onPress}
             >
-              <Text style={styles.menuIcon}>{item.icon}</Text>
+              <View style={[styles.menuIconCircle, { backgroundColor: item.color + "15" }]}>
+                <Ionicons name={item.icon as any} size={20} color={item.color} />
+              </View>
               <Text style={styles.menuLabel}>{item.label}</Text>
-              <Text style={styles.menuArrow}>→</Text>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.text.muted} />
             </TouchableOpacity>
           ))}
         </View>
@@ -201,7 +207,8 @@ export default function ProfileScreen() {
 
         {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>🚪 Keluar dari Akun</Text>
+          <Ionicons name="log-out-outline" size={20} color={COLORS.danger} style={{ marginRight: 8 }} />
+          <Text style={styles.logoutText}>Keluar dari Akun</Text>
         </TouchableOpacity>
 
         <View style={{ height: 24 }} />
@@ -255,7 +262,9 @@ export default function ProfileScreen() {
                 style={[styles.goalOption, editGoal === g.id && styles.goalOptionActive]}
                 onPress={() => setEditGoal(g.id)}
               >
-                <Text style={styles.goalOptionIcon}>{g.icon}</Text>
+                <View style={[styles.modalGoalIconCircle, { backgroundColor: (g as any).color + "15" }]}>
+                  <Ionicons name={g.iconName} size={20} color={(g as any).color} />
+                </View>
                 <Text style={[styles.goalOptionLabel, editGoal === g.id && styles.goalOptionLabelActive]}>
                   {g.label}
                 </Text>
@@ -303,13 +312,16 @@ const styles = StyleSheet.create({
   profileName: { fontSize: 20, fontWeight: "800", color: COLORS.text.primary, marginBottom: 4 },
   profileEmail: { fontSize: 13, color: COLORS.text.muted, marginBottom: 8 },
   editBtn: {
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1.5,
     borderColor: COLORS.primary,
-    borderRadius: 10,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
+    marginTop: 10,
   },
-  editBtnText: { color: COLORS.primary, fontWeight: "700", fontSize: 13 },
+  editBtnText: { color: COLORS.primary, fontWeight: "800", fontSize: 14 },
   statsCard: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
@@ -340,10 +352,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
   },
-  goalRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
-  goalIcon: { fontSize: 32 },
-  goalTitle: { fontSize: 15, fontWeight: "700", color: COLORS.text.primary },
-  goalDesc: { fontSize: 12, color: COLORS.text.muted, marginTop: 2 },
+  goalRow: { flexDirection: "row", alignItems: "center", gap: 16, marginBottom: 16 },
+  goalIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  goalTitle: { fontSize: 16, fontWeight: "800", color: COLORS.text.primary, letterSpacing: -0.3 },
+  goalDesc: { fontSize: 13, color: COLORS.text.muted, marginTop: 4, lineHeight: 18 },
   calTarget: {
     backgroundColor: COLORS.background,
     borderRadius: 12,
@@ -369,24 +387,32 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    gap: 12,
+    gap: 16,
   },
   menuItemBorder: {
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  menuIcon: { fontSize: 20 },
-  menuLabel: { flex: 1, fontSize: 15, fontWeight: "500", color: COLORS.text.primary },
-  menuArrow: { fontSize: 16, color: COLORS.text.muted },
+  menuIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  menuLabel: { flex: 1, fontSize: 15, fontWeight: "600", color: COLORS.text.primary },
   logoutBtn: {
     backgroundColor: "#FEF2F2",
-    borderRadius: 14,
-    padding: 16,
+    borderRadius: 16,
+    padding: 18,
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: "#FECACA",
+    marginTop: 8,
   },
-  logoutText: { color: COLORS.danger, fontSize: 15, fontWeight: "700" },
+  logoutText: { color: COLORS.danger, fontSize: 16, fontWeight: "800" },
   modalSafe: { flex: 1, backgroundColor: COLORS.background },
   modalHeader: {
     flexDirection: "row",
@@ -415,16 +441,22 @@ const styles = StyleSheet.create({
   goalOption: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 16,
     backgroundColor: COLORS.white,
     borderWidth: 1.5,
     borderColor: COLORS.border,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
   },
   goalOptionActive: { borderColor: COLORS.primary, backgroundColor: "#F0FDF4" },
-  goalOptionIcon: { fontSize: 24 },
-  goalOptionLabel: { fontSize: 14, fontWeight: "600", color: COLORS.text.secondary },
+  modalGoalIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  goalOptionLabel: { fontSize: 15, fontWeight: "700", color: COLORS.text.secondary },
   goalOptionLabelActive: { color: COLORS.primary },
 });

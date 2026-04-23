@@ -48,10 +48,10 @@ export const DEFAULT_DAILY_TARGETS = {
 };
 
 export const MEAL_TYPES = [
-  { id: "breakfast", label: "Sarapan", icon: "🌅", color: "#F59E0B" },
-  { id: "lunch", label: "Makan Siang", icon: "☀️", color: "#16A34A" },
-  { id: "dinner", label: "Makan Malam", icon: "🌙", color: "#6366F1" },
-  { id: "snack", label: "Camilan", icon: "🍎", color: "#EC4899" },
+  { id: "breakfast", label: "Sarapan", icon: "🌅", iconName: "sunny-outline", color: "#F59E0B" },
+  { id: "lunch", label: "Makan Siang", icon: "☀️", iconName: "restaurant-outline", color: "#16A34A" },
+  { id: "dinner", label: "Makan Malam", icon: "🌙", iconName: "moon-outline", color: "#6366F1" },
+  { id: "snack", label: "Camilan", icon: "🍎", iconName: "nutrition-outline", color: "#EC4899" },
 ] as const;
 
 export const GOAL_OPTIONS = [
@@ -59,6 +59,8 @@ export const GOAL_OPTIONS = [
     id: "lose_weight",
     label: "Turunkan Berat Badan",
     icon: "📉",
+    iconName: "trending-down-outline",
+    color: "#F97316",
     description: "Defisit kalori untuk membakar lemak",
     calorieMultiplier: 0.8,
   },
@@ -66,6 +68,8 @@ export const GOAL_OPTIONS = [
     id: "maintain",
     label: "Jaga Berat Badan",
     icon: "⚖️",
+    iconName: "scale-outline",
+    color: "#0EA5E9",
     description: "Pertahankan berat badan ideal",
     calorieMultiplier: 1.0,
   },
@@ -73,6 +77,8 @@ export const GOAL_OPTIONS = [
     id: "gain_muscle",
     label: "Bangun Otot",
     icon: "💪",
+    iconName: "fitness-outline",
+    color: "#8B5CF6",
     description: "Surplus kalori untuk membangun otot",
     calorieMultiplier: 1.15,
   },
@@ -80,6 +86,8 @@ export const GOAL_OPTIONS = [
     id: "be_healthy",
     label: "Hidup Sehat",
     icon: "🌿",
+    iconName: "leaf-outline",
+    color: "#16A34A",
     description: "Pola makan seimbang dan bergizi",
     calorieMultiplier: 1.0,
   },

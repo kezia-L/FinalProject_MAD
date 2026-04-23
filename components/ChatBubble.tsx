@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { TouchableOpacity, StyleSheet, Text, View, Animated } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useSegments } from "expo-router";
 import { COLORS } from "../lib/constants";
 import { useAppStore } from "../store/useAppStore";
@@ -48,7 +49,7 @@ export function ChatBubble() {
       activeOpacity={0.8}
     >
       <View style={styles.iconContainer}>
-        <Text style={styles.emoji}>🤖</Text>
+        <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
       </View>
       <View style={styles.badge}>
         <Animated.View 
@@ -84,9 +85,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  emoji: {
-    fontSize: 28,
-  },
+
   badge: {
     position: "absolute",
     top: 0,
