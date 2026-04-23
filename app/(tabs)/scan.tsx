@@ -32,7 +32,7 @@ export default function ScanScreen() {
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const cameraRef = useRef<CameraView>(null);
 
-  const analyzeFood = useAction(api.aiRecommend.analyzeFood);
+  const analyzeFood = useAction(api.aiScan.analyzeFood);
   const saveScan = useMutation(api.scanHistory.saveScan);
   const generateUploadUrl = useMutation(api.scanHistory.generateUploadUrl);
 

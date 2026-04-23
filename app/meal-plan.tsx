@@ -21,7 +21,7 @@ export default function MealPlanScreen() {
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const generateMealPlan = useAction(api.aiRecommend.generateMealPlan);
+  const generateMealPlan = useAction(api.aiPlanner.generateMealPlan);
   const userProfile = useQuery(
     api.users.getUserById,
     userId ? { userId: userId as Id<"users"> } : "skip"

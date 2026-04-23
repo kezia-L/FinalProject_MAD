@@ -8,7 +8,9 @@
  * @module
  */
 
-import type * as aiRecommend from "../aiRecommend.js";
+import type * as aiChat from "../aiChat.js";
+import type * as aiPlanner from "../aiPlanner.js";
+import type * as aiScan from "../aiScan.js";
 import type * as foodLogs from "../foodLogs.js";
 import type * as foods from "../foods.js";
 import type * as googleAuth from "../googleAuth.js";
@@ -24,7 +26,9 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  aiRecommend: typeof aiRecommend;
+  aiChat: typeof aiChat;
+  aiPlanner: typeof aiPlanner;
+  aiScan: typeof aiScan;
   foodLogs: typeof foodLogs;
   foods: typeof foods;
   googleAuth: typeof googleAuth;
