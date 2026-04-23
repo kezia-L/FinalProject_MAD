@@ -34,8 +34,12 @@ export const analyzeFood = action({
     imageBase64: v.string(),
     mimeType: v.optional(v.string()),
     customModel: v.optional(v.string()),
+    currentTime: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const contextPrompt = `\nWaktu lokal sekarang: ${args.currentTime || "Tidak diketahui"}.`;
+    const fullPrompt = FOOD_ANALYSIS_PROMPT + contextPrompt;
+    
     // Inisialisasi Model Langsung
     const apiKey = process.env.GEMINI_API_KEY_SCAN ?? "";
     if (!apiKey || apiKey === "MOCK") {
@@ -58,7 +62,7 @@ export const analyzeFood = action({
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = args.customModel || "gemini-3-flash-preview";
+    const modelName = args.customModel || "gemini-3.1-flash-preview";
     const model = genAI.getGenerativeModel({ model: modelName });
     const mimeType = args.mimeType ?? "image/jpeg";
     try {
@@ -69,7 +73,7 @@ export const analyzeFood = action({
             data: args.imageBase64,
           },
         },
-        FOOD_ANALYSIS_PROMPT,
+        fullPrompt,
       ]);
 
       const text = result.response.text();

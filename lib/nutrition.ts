@@ -1,6 +1,21 @@
 // lib/nutrition.ts
 import { DailyNutrition, FoodLog } from "./types";
-import { COLORS } from "./constants";
+import { COLORS, DEFAULT_DAILY_TARGETS } from "./constants";
+
+/**
+ * Mendapatkan string tanggal & waktu lokal user yang diformat
+ */
+export const getFormattedDateTime = () => {
+  return new Date().toLocaleString("id-ID", {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  });
+};
 
 export function calculateBMR(
   weight: number, // kg

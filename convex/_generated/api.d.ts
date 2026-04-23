@@ -10,6 +10,7 @@
 
 import type * as aiChat from "../aiChat.js";
 import type * as aiPlanner from "../aiPlanner.js";
+import type * as aiProgress from "../aiProgress.js";
 import type * as aiScan from "../aiScan.js";
 import type * as foodLogs from "../foodLogs.js";
 import type * as foods from "../foods.js";
@@ -28,6 +29,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   aiChat: typeof aiChat;
   aiPlanner: typeof aiPlanner;
+  aiProgress: typeof aiProgress;
   aiScan: typeof aiScan;
   foodLogs: typeof foodLogs;
   foods: typeof foods;

@@ -1,20 +1,22 @@
 // app/(tabs)/progress.tsx
 import React, { useMemo } from "react";
 import {
+  ActivityIndicator,
   View,
   Text,
   StyleSheet,
   ScrollView,
   Dimensions,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "convex/react";
+import { useAction, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { COLORS, DEFAULT_DAILY_TARGETS } from "../../lib/constants";
 import { useAppStore } from "../../store/useAppStore";
 import { Id } from "../../convex/_generated/dataModel";
-import { getLast7Days, getDateString } from "../../lib/nutrition";
+import { getLast7Days, getDateString, getFormattedDateTime } from "../../lib/nutrition";
 import Svg, { Rect, Text as SvgText, Line } from "react-native-svg";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -24,6 +26,10 @@ const BAR_PADDING = 8;
 
 export default function ProgressScreen() {
   const { userId } = useAppStore();
+  const [aiInsight, setAiInsight] = React.useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  const generateInsight = useAction(api.aiProgress.generateWeeklyInsight);
+  
   const days = useMemo(() => getLast7Days(), []);
 
   const userProfile = useQuery(
@@ -69,14 +75,38 @@ export default function ProgressScreen() {
 
   const barWidth = CHART_WIDTH / 7 - BAR_PADDING;
   const targetY = CHART_HEIGHT - (target / maxCal) * CHART_HEIGHT;
-
   const dayLabels = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
+  // Manual Generate AI Insight
+  async function handleFetchInsight() {
+    if (!weeklyData || !userProfile || isGenerating) return;
+    
+    setIsGenerating(true);
+    try {
+      const dataForAI = days.map(d => ({
+        date: d,
+        calories: weeklyData[d] ?? 0
+      }));
+
+      const result = await generateInsight({
+        userName: userProfile.name,
+        goal: userProfile.goal,
+        dailyTarget: target,
+        weeklyData: dataForAI,
+        currentTime: getFormattedDateTime()
+      });
+      setAiInsight(result);
+    } catch (err) {
+      console.error(err);
+      setAiInsight("Gagal mendapatkan analisis. Silakan coba lagi nanti.");
+    } finally {
+      setIsGenerating(false);
+    }
+  }
+
   const getAnalysis = () => {
-    if (avgDaily === 0) return "Mulai catat makananmu untuk melihat analisis progress mingguan!";
-    if (avgDaily < target * 0.8) return "Rata-rata kalori harian kamu di bawah target. Coba tambah porsi makan atau konsumsi camilan sehat.";
-    if (avgDaily <= target * 1.1) return "Hebat! Rata-rata kalori harianmu sangat mendekati target. Pertahankan pola makan ini!";
-    return "Rata-rata kalori harianmu sedikit melebihi target. Coba kurangi porsi makanan berlemak atau manis.";
+    if (avgDaily === 0 && !aiInsight) return "Mulai catat makananmu untuk melihat analisis progress!";
+    return aiInsight || "Klik tombol di atas untuk mendapatkan analisis AI khusus untukmu.";
   };
 
   return (
@@ -208,13 +238,39 @@ export default function ProgressScreen() {
           </View>
         </View>
 
-        {/* Analysis */}
-        <View style={styles.analysisCard}>
+        {/* AI Analysis */}
+        <View style={[styles.analysisCard, isGenerating && { opacity: 0.9 }]}>
           <View style={styles.analysisHeader}>
-            <Ionicons name="bulb-outline" size={20} color="#fff" />
-            <Text style={styles.analysisTitle}>Analisis Mingguan</Text>
+            <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <View style={styles.aiIconCircle}>
+                <Ionicons name="sparkles" size={16} color={COLORS.primary} />
+              </View>
+              <Text style={styles.analysisTitle}>AI Progress Insight</Text>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.refreshBtn} 
+              onPress={handleFetchInsight}
+              disabled={isGenerating}
+            >
+              {isGenerating ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="refresh" size={18} color="#fff" />
+              )}
+            </TouchableOpacity>
           </View>
-          <Text style={styles.analysisText}>{getAnalysis()}</Text>
+          
+          <Text style={styles.analysisText}>
+            {getAnalysis()}
+          </Text>
+          
+          {!aiInsight && !isGenerating && (
+            <TouchableOpacity style={styles.generateActionBtn} onPress={handleFetchInsight}>
+              <Text style={styles.generateActionText}>Mulai Analisis AI</Text>
+              <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Today summary */}
@@ -323,6 +379,14 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendText: { fontSize: 11, color: COLORS.text.muted },
+  aiIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#fff",
+    justifyContent: "center",
+    alignItems: "center",
+  },
   analysisCard: {
     backgroundColor: COLORS.primary,
     borderRadius: 24,
@@ -330,13 +394,37 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 15,
     elevation: 8,
   },
-  analysisHeader: { flexDirection: "row", alignItems: "center", marginBottom: 12, gap: 8 },
-  analysisTitle: { fontSize: 16, fontWeight: "800", color: "#fff", letterSpacing: -0.3 },
-  analysisText: { fontSize: 14, color: "rgba(255,255,255,0.9)", lineHeight: 22 },
+  analysisHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  refreshBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  generateActionBtn: {
+    marginTop: 16,
+    backgroundColor: "#fff",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  generateActionText: {
+    color: COLORS.primary,
+    fontWeight: "800",
+    fontSize: 14,
+  },
+  analysisTitle: { fontSize: 16, fontWeight: "900", color: "#fff", letterSpacing: -0.3 },
+  analysisText: { fontSize: 14, color: "rgba(255,255,255,0.95)", lineHeight: 22, fontWeight: "500" },
   todayCard: {
     backgroundColor: COLORS.white,
     borderRadius: 24,

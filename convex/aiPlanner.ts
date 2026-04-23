@@ -13,10 +13,11 @@ export const generateMealPlan = action({
       age: v.optional(v.number()),
     }),
     customModel: v.optional(v.string()),
+    currentTime: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Inisialisasi Model Langsung
-    const apiKey = process.env.GEMINI_API_KEY_RECOM || process.env.GEMINI_API_KEY_SCAN || "";
+    const apiKey = process.env.GEMINI_API_KEY_SCAN || "";
     if (!apiKey || apiKey === "MOCK") {
       // MOCK FALLBACK
       const mockPlan = {
@@ -32,12 +33,41 @@ export const generateMealPlan = action({
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const modelName = args.customModel || "gemini-2.5-flash-lite";
-    const model = genAI.getGenerativeModel({ model: modelName });
+    const model = genAI.getGenerativeModel({ 
+      model: modelName,
+      generationConfig: {
+        temperature: 1.0, // Meningkatkan variasi jawaban
+        topP: 0.95,
+      }
+    });
     const targetCal = args.userProfile.dailyCalorieTarget ?? 2000;
 
-    const prompt = `Buat rencana makan harian (${targetCal} kkal) dalam JSON untuk: ${JSON.stringify(args.userProfile)}.
-Format: { "breakfast": [], "lunch": [], "dinner": [], "snacks": [], "totalCalories": number, "notes": string }.
-Gunakan Bahasa Indonesia. Return ONLY JSON.`;
+    const prompt = `
+    Anda adalah Pakar Nutrisi AI yang cerdas, kreatif, dan sangat paham dengan kuliner Indonesia. 
+    Buat rencana makan harian yang unik dan bervariasi untuk user dengan target ${targetCal} kkal.
+    
+    KONTEKS PENTING:
+    - Profil User: ${JSON.stringify(args.userProfile)}.
+    - Waktu & Lokasi: ${args.currentTime || "Indonesia"}. 
+    (Gunakan offset waktu tersebut untuk menentukan lokasi user: +07:00 adalah WIB/Barat, +08:00 adalah WITA/Tengah, +09:00 adalah WIT/Timur).
+    
+    ANDA WAJIB MENGIKUTI ATURAN INI:
+    1. LOKASI: Sesuaikan menu dengan ketersediaan bahan makanan di lokasi user berdasarkan zona waktu tersebut. Jangan berikan menu yang sulit dicari di daerah tersebut.
+    2. VARIASI MENU: Berikan menu yang berbeda dan kreatif setiap kali permintaan dibuat. JANGAN mengulangi menu yang membosankan.
+    3. SPESIFIK: Berikan NAMA MAKANAN yang lengkap dan menggugah selera dalam Bahasa Indonesia.
+    4. NUTRISI: Berikan angka protein, carbs, dan fat yang REALISTIS (JANGAN 0).
+    5. CATATAN: Berikan catatan singkat (notes) tentang mengapa kombinasi menu ini sehat dan cocok untuk tujuan user.
+
+    Keluarkan HANYA JSON dengan struktur ini:
+    {
+      "breakfast": [{"name": string, "calories": number, "protein": number, "carbs": number, "fat": number, "portion": string}],
+      "lunch": [...],
+      "dinner": [...],
+      "snacks": [...],
+      "totalCalories": number,
+      "notes": string
+    }
+    `;
 
     try {
       const result = await model.generateContent(prompt);

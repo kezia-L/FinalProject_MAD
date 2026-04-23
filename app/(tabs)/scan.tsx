@@ -17,6 +17,7 @@ import * as ImagePicker from "expo-image-picker";
 import { useAction, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { COLORS } from "../../lib/constants";
+import { getFormattedDateTime } from "../../lib/nutrition";
 import { ScanOverlay } from "../../components/ScanOverlay";
 import { prepareImageForAI } from "../../lib/imageAnalyzer";
 import { useAppStore } from "../../store/useAppStore";
@@ -45,7 +46,11 @@ export default function ScanScreen() {
     setIsAnalyzing(true);
     try {
       const base64 = await prepareImageForAI(uri);
-      const result = await analyzeFood({ imageBase64: base64, mimeType: "image/jpeg" });
+      const result = await analyzeFood({ 
+        imageBase64: base64, 
+        mimeType: "image/jpeg",
+        currentTime: getFormattedDateTime()
+      });
 
       if (!result.success || !result.data) {
         Alert.alert("Analisis Gagal", "Gagal memproses gambar. Coba lagi.");

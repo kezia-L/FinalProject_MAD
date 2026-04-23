@@ -20,6 +20,7 @@ import { useAppStore } from "../../store/useAppStore";
 import { Id } from "../../convex/_generated/dataModel";
 import { FoodAnalysis } from "../../lib/types";
 import { getDateString } from "../../lib/nutrition";
+import { Ionicons } from "@expo/vector-icons";
 
 const HEALTH_SCORE_COLORS = ["", COLORS.danger, "#F97316", COLORS.accent, "#84CC16", COLORS.primary];
 const HEALTH_SCORE_LABELS = ["", "Sangat Buruk", "Buruk", "Cukup", "Baik", "Sangat Baik"];
@@ -104,10 +105,10 @@ export default function ScanResultScreen() {
         {/* Header */}
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Text style={styles.backText}>← Kembali</Text>
+            <Ionicons name="chevron-back" size={24} color={COLORS.text.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Hasil Analisis</Text>
-          <View style={{ width: 80 }} />
+          <View style={{ width: 40 }} />
         </View>
 
         {/* Food name & confidence */}
@@ -221,34 +222,48 @@ export default function ScanResultScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Tambah ke Diary sebagai:</Text>
             <View style={styles.mealGrid}>
-              {MEAL_TYPES.map((m) => (
-                <TouchableOpacity
-                  key={m.id}
-                  style={[
-                    styles.mealChip,
-                    selectedMeal === m.id && { backgroundColor: m.color, borderColor: m.color },
-                  ]}
-                  onPress={() => setSelectedMeal(m.id as typeof selectedMeal)}
-                >
-                  <Text style={styles.mealChipIcon}>{m.icon}</Text>
-                  <Text
+              {MEAL_TYPES.map((m) => {
+                const isActive = selectedMeal === m.id;
+                return (
+                  <TouchableOpacity
+                    key={m.id}
                     style={[
-                      styles.mealChipLabel,
-                      selectedMeal === m.id && { color: "#fff", fontWeight: "700" },
+                      styles.mealCard,
+                      isActive && { borderColor: m.color, backgroundColor: m.color + "08" },
                     ]}
+                    onPress={() => setSelectedMeal(m.id as typeof selectedMeal)}
+                    activeOpacity={0.7}
                   >
-                    {m.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <View style={[
+                      styles.mealIconWrapper,
+                      { backgroundColor: isActive ? m.color : COLORS.gray[100] }
+                    ]}>
+                      <Ionicons 
+                        name={m.iconName as any} 
+                        size={22} 
+                        color={isActive ? "#fff" : COLORS.gray[500]} 
+                      />
+                    </View>
+                    <Text style={[
+                      styles.mealCardLabel,
+                      isActive && { color: m.color, fontWeight: "800" }
+                    ]}>
+                      {m.label}
+                    </Text>
+                    {isActive && (
+                      <View style={[styles.activeDot, { backgroundColor: m.color }]} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
         )}
 
-        {/* Save button */}
         {scan.isSaved ? (
           <View style={styles.savedBanner}>
-            <Text style={styles.savedBannerText}>✅ Sudah disimpan ke diary</Text>
+            <Ionicons name="checkmark-done-circle" size={22} color={COLORS.primary} style={{ marginRight: 8 }} />
+            <Text style={styles.savedBannerText}>Sudah disimpan ke diary</Text>
           </View>
         ) : (
           <TouchableOpacity
@@ -260,7 +275,10 @@ export default function ScanResultScreen() {
             {saving ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.saveBtnText}>💾 Simpan ke Diary</Text>
+              <View style={styles.saveBtnContent}>
+                <Ionicons name="add-circle" size={22} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.saveBtnText}>Simpan ke Diary</Text>
+              </View>
             )}
           </TouchableOpacity>
         )}
@@ -280,11 +298,25 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 20,
+    paddingHorizontal: 4,
   },
-  backBtn: { padding: 4 },
-  backText: { color: COLORS.primary, fontSize: 15, fontWeight: "600" },
-  headerTitle: { fontSize: 16, fontWeight: "700", color: COLORS.text.primary },
+  backBtn: { 
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.white,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  headerTitle: { fontSize: 18, fontWeight: "800", color: COLORS.text.primary, letterSpacing: -0.5 },
   foodNameCard: {
     backgroundColor: COLORS.white,
     borderRadius: 20,
@@ -362,21 +394,45 @@ const styles = StyleSheet.create({
   tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
   tipDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary, marginTop: 6 },
   tipText: { flex: 1, fontSize: 13, color: COLORS.text.secondary, lineHeight: 20 },
-  mealGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
-  mealChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    backgroundColor: COLORS.white,
-    minWidth: "46%",
+  mealGrid: { 
+    flexDirection: "row", 
+    flexWrap: "wrap", 
+    gap: 12, 
+    marginTop: 8 
   },
-  mealChipIcon: { fontSize: 16 },
-  mealChipLabel: { fontSize: 13, fontWeight: "500", color: COLORS.text.secondary },
+  mealCard: {
+    flex: 1,
+    minWidth: "45%",
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 16,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: COLORS.gray[100],
+    position: "relative",
+    overflow: "hidden",
+  },
+  mealIconWrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  mealCardLabel: { 
+    fontSize: 14, 
+    fontWeight: "600", 
+    color: COLORS.text.secondary 
+  },
+  activeDot: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
   saveBtn: {
     backgroundColor: COLORS.primary,
     borderRadius: 16,
@@ -389,12 +445,19 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   saveBtnDisabled: { opacity: 0.7 },
-  saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "800" },
+  saveBtnContent: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    justifyContent: "center" 
+  },
+  saveBtnText: { color: "#fff", fontSize: 17, fontWeight: "800", letterSpacing: -0.2 },
   savedBanner: {
     backgroundColor: "#D1FAE5",
     borderRadius: 16,
     paddingVertical: 16,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: "#6EE7B7",
   },

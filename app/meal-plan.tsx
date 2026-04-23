@@ -10,6 +10,7 @@ import { useAction, useQuery } from "convex/react";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../convex/_generated/api";
 import { COLORS, MEAL_TYPES, GOAL_OPTIONS } from "../lib/constants";
+import { getFormattedDateTime } from "../lib/nutrition";
 import { useAppStore } from "../store/useAppStore";
 import { Id } from "../convex/_generated/dataModel";
 import { MealPlan, MealPlanItem } from "../lib/types";
@@ -39,6 +40,7 @@ export default function MealPlanScreen() {
           height: userProfile?.height,
           age: userProfile?.age,
         },
+        currentTime: getFormattedDateTime()
       });
       if (result.success && result.data) {
         setPlan(result.data as MealPlan);
