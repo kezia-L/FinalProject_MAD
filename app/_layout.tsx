@@ -24,7 +24,7 @@ function RootLayoutNav() {
     const inAuthGroup = segments[0] === "(auth)";
 
     if (!userId) {
-      if (!inAuthGroup) {
+      if (!inAuthGroup && segments[0] !== "ai-chat") {
         router.replace("/(auth)/login");
       }
     } else {
@@ -44,7 +44,8 @@ function RootLayoutNav() {
         <Stack.Screen name="meal-plan" options={{ presentation: "modal" }} />
         <Stack.Screen name="scan_result/[id]" />
       </Stack>
-      {segments[0] !== "(auth)" && <ChatBubble />}
+      {/* Hanya munculkan bubble jika di dalam tabs DAN sudah login */}
+      {isLoaded && userId && segments[0] === "(tabs)" && <ChatBubble />}
     </>
   );
 }

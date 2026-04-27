@@ -5,7 +5,7 @@ import { useRouter, useSegments } from "expo-router";
 import { COLORS } from "../lib/constants";
 import { useAppStore } from "../store/useAppStore";
 
-export function ChatBubble() {
+export function ChatBubble({ context }: { context?: string }) {
   const router = useRouter();
   const segments = useSegments();
   const { userId } = useAppStore();
@@ -45,7 +45,10 @@ export function ChatBubble() {
   return (
     <TouchableOpacity
       style={styles.bubble}
-      onPress={() => router.push("/ai-chat")}
+      onPress={() => router.push({
+        pathname: "/ai-chat",
+        params: context ? { context } : {}
+      })}
       activeOpacity={0.8}
     >
       <View style={styles.iconContainer}>

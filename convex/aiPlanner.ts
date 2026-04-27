@@ -32,7 +32,7 @@ export const generateMealPlan = action({
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = args.customModel || "gemini-2.5-flash-lite";
+    const modelName = args.customModel || "gemma-3-1b-it";
     const model = genAI.getGenerativeModel({ 
       model: modelName,
       generationConfig: {
@@ -43,29 +43,30 @@ export const generateMealPlan = action({
     const targetCal = args.userProfile.dailyCalorieTarget ?? 2000;
 
     const prompt = `
-    Anda adalah Pakar Nutrisi AI yang cerdas, kreatif, dan sangat paham dengan kuliner Indonesia. 
-    Buat rencana makan harian yang unik dan bervariasi untuk user dengan target ${targetCal} kkal.
+    Anda adalah Pakar Nutrisi AI Profesional yang ahli dalam kuliner sehat Indonesia. 
+    Tugas Anda adalah merancang rencana makan harian yang SEHAT, BERGIZI, dan LEZAT untuk user dengan target ${targetCal} kkal.
     
-    KONTEKS PENTING:
-    - Profil User: ${JSON.stringify(args.userProfile)}.
-    - Waktu & Lokasi: ${args.currentTime || "Indonesia"}. 
-    (Gunakan offset waktu tersebut untuk menentukan lokasi user: +07:00 adalah WIB/Barat, +08:00 adalah WITA/Tengah, +09:00 adalah WIT/Timur).
-    
-    ANDA WAJIB MENGIKUTI ATURAN INI:
-    1. LOKASI: Sesuaikan menu dengan ketersediaan bahan makanan di lokasi user berdasarkan zona waktu tersebut. Jangan berikan menu yang sulit dicari di daerah tersebut.
-    2. VARIASI MENU: Berikan menu yang berbeda dan kreatif setiap kali permintaan dibuat. JANGAN mengulangi menu yang membosankan.
-    3. SPESIFIK: Berikan NAMA MAKANAN yang lengkap dan menggugah selera dalam Bahasa Indonesia.
-    4. NUTRISI: Berikan angka protein, carbs, dan fat yang REALISTIS (JANGAN 0).
-    5. CATATAN: Berikan catatan singkat (notes) tentang mengapa kombinasi menu ini sehat dan cocok untuk tujuan user.
+    DATA USER:
+    - Profil: ${JSON.stringify(args.userProfile)}.
+    - Lokasi & Waktu: ${args.currentTime || "Indonesia"}.
 
-    Keluarkan HANYA JSON dengan struktur ini:
+    ATURAN NUTRISI SEHAT (WAJIB):
+    1. CARA MASAK: Utamakan Kukus, Rebus, Bakar/Panggang, atau Pepes. Hindari Gorengan (deep-fried) dan penggunaan santan kental yang berlebihan.
+    2. SUMBER KARBO: Utamakan karbohidrat kompleks seperti Nasi Merah, Nasi Hitam, Ubi, atau Gandum.
+    3. PROTEIN: Fokus pada Dada Ayam, Ikan, Tempe, Tahu, atau Daging Tanpa Lemak. Berikan rincian Protein (P), Karbohidrat (K), dan Lemak (L) yang akurat.
+    4. SERAT: WAJIB menyertakan sayuran (vegetables) pada setiap menu utama (Breakfast, Lunch, Dinner).
+    5. CEMILAN: Berupa buah-buahan segar, yogurt, atau kacang-kacangan sehat.
+    6. LOKASI: Sesuaikan menu dengan daerah user (WIB/WITA/WIT). Pastikan bahan mudah ditemukan di pasar lokal.
+    7. VARIASI: Berikan 3 OPSI menu untuk setiap kategori (breakfast, lunch, dinner, snacks) agar user memiliki pilihan.
+
+    Keluarkan HANYA JSON murni (tanpa tag markdown):
     {
       "breakfast": [{"name": string, "calories": number, "protein": number, "carbs": number, "fat": number, "portion": string}],
       "lunch": [...],
       "dinner": [...],
       "snacks": [...],
-      "totalCalories": number,
-      "notes": string
+      "totalCalories": number (rata-rata kombinasi),
+      "notes": string (berikan tips gizi terkait menu yang Anda buat)
     }
     `;
 

@@ -17,6 +17,7 @@ import type * as foods from "../foods.js";
 import type * as googleAuth from "../googleAuth.js";
 import type * as http from "../http.js";
 import type * as images from "../images.js";
+import type * as mealPlans from "../mealPlans.js";
 import type * as scanHistory from "../scanHistory.js";
 import type * as users from "../users.js";
 
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   googleAuth: typeof googleAuth;
   http: typeof http;
   images: typeof images;
+  mealPlans: typeof mealPlans;
   scanHistory: typeof scanHistory;
   users: typeof users;
 }>;

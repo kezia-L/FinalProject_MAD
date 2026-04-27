@@ -62,7 +62,7 @@ export const analyzeFood = action({
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = args.customModel || "gemini-3.1-flash-preview";
+    const modelName = args.customModel || "gemini-2.5-flash-lite";
     const model = genAI.getGenerativeModel({ model: modelName });
     const mimeType = args.mimeType ?? "image/jpeg";
     try {

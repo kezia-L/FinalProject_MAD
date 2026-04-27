@@ -80,4 +80,14 @@ export default defineSchema({
     isSaved: v.boolean(),
     imageStorageId: v.optional(v.id("_storage")),
   }).index("by_userId", ["userId"]),
+
+  mealPlans: defineTable({
+    userId: v.id("users"),
+    planData: v.any(), // Menyimpan objek MealPlan lengkap
+    notes: v.optional(v.string()),
+    isActive: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_active", ["userId", "isActive"]),
 });

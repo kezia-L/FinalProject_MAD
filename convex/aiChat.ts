@@ -10,6 +10,10 @@ const AVAILABLE_MODELS = {
   "gemini-2.5-flash-lite": "gemini-2.5-flash-lite",
   "gemma-4-31b": "gemma-4-31b-it",
   "gemma-4-26b": "gemma-4-26b-a4b-it",
+  "gemma-3-27b": "gemma-3-27b-it",
+  "gemma-3-12b": "gemma-3-12b-it",
+  "gemma-3-4b": "gemma-3-4b-it",
+  "gemma-3-1b": "gemma-3-1b-it",
 };
 
 export const chatWithAI = action({
@@ -30,26 +34,28 @@ export const chatWithAI = action({
       })
     ),
     customModel: v.optional(v.string()),
-    currentTime: v.optional(v.string())
+    currentTime: v.optional(v.string()),
+    context: v.optional(v.string())
   },
   handler: async (ctx, args) => {
     // Inisialisasi Model Langsung
-    const apiKey = process.env.GEMINI_API_KEY_CHAT || process.env.GEMINI_API_KEY_SCAN || "";
+    const apiKey = process.env.GEMINI_API_KEY_SCAN || "";
     if (!apiKey || apiKey === "MOCK") return { success: false, response: "AI Mode simulasi (API Key tidak ditemukan)." };
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
     // Logika pemetaan model di Backend
     const selectedKey = args.customModel || "gemini-3.1-flash-lite";
-    const modelName = AVAILABLE_MODELS[selectedKey as keyof typeof AVAILABLE_MODELS] || AVAILABLE_MODELS["gemma-4-31b"];
+    const modelName = AVAILABLE_MODELS[selectedKey as keyof typeof AVAILABLE_MODELS] || AVAILABLE_MODELS["gemma-3-27b"];
     
     const model = genAI.getGenerativeModel({ model: modelName });
 
     const lastMessage = args.messages[args.messages.length - 1].parts[0].text;
 
-    const systemInstruction = `Kamu adalah HealthMate AI. Bantu pengguna dengan nutrisi/kesehatan dalam Bahasa Indonesia. 
+    const systemInstruction = `Kamu adalah HealthMate AI, asisten kesehatan profesional. Bantu pengguna dengan nutrisi dan kesehatan dalam Bahasa Indonesia. 
     Waktu lokal sekarang: ${args.currentTime || "Tidak diketahui"}.
-    ${args.userProfile ? `Profil User: ${JSON.stringify(args.userProfile)}` : ""}`;
+    ${args.userProfile ? `Profil User: ${JSON.stringify(args.userProfile)}` : ""}
+    ${args.context ? `KONTEKS (Gunakan HANYA jika pengguna bertanya tentang rencana makan mereka): ${args.context}` : ""}`;
 
     try {
       const chat = model.startChat({

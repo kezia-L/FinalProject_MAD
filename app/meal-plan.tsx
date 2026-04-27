@@ -1,12 +1,12 @@
 // app/meal-plan.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useQuery, useMutation } from "convex/react";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../convex/_generated/api";
 import { COLORS, MEAL_TYPES, GOAL_OPTIONS } from "../lib/constants";
@@ -14,19 +14,77 @@ import { getFormattedDateTime } from "../lib/nutrition";
 import { useAppStore } from "../store/useAppStore";
 import { Id } from "../convex/_generated/dataModel";
 import { MealPlan, MealPlanItem } from "../lib/types";
+import { ChatBubble } from "../components/ChatBubble";
 
 export default function MealPlanScreen() {
   const router = useRouter();
   const { userId } = useAppStore();
   const [plan, setPlan] = useState<MealPlan | null>(null);
+  const [selectedMeals, setSelectedMeals] = useState<Record<string, number>>({
+    breakfast: 0, lunch: 0, dinner: 0, snacks: 0
+  });
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isChatVisible, setIsChatVisible] = useState(false);
+
+  const activePlanQuery = useQuery(
+    api.mealPlans.getActiveMealPlan,
+    userId ? { userId: userId as Id<"users"> } : "skip"
+  );
 
   const generateMealPlan = useAction(api.aiPlanner.generateMealPlan);
+  const saveMealPlan = useMutation(api.mealPlans.saveMealPlan);
   const userProfile = useQuery(
     api.users.getUserById,
     userId ? { userId: userId as Id<"users"> } : "skip"
   );
+
+  useEffect(() => {
+    if (activePlanQuery && !plan) {
+      setPlan(activePlanQuery.planData as MealPlan);
+      setNotes(activePlanQuery.notes ?? "");
+      // Jika ada rincian pilihan di data tersimpan, kita bisa memuatnya di sini
+      // Tapi untuk sekarang kita default ke yang pertama
+    }
+  }, [activePlanQuery]);
+
+  const handleSavePlan = async () => {
+    if (!plan || !userId) return;
+    setLoading(true);
+    try {
+      // Buat objek rencana baru hanya dengan menu yang dipilih
+      const selectedPlanData: any = {
+        breakfast: [plan.breakfast[selectedMeals.breakfast]],
+        lunch: [plan.lunch[selectedMeals.lunch]],
+        dinner: [plan.dinner[selectedMeals.dinner]],
+        snacks: plan.snacks.length > 0 ? [plan.snacks[selectedMeals.snacks]] : [],
+        totalCalories: 
+          (plan.breakfast[selectedMeals.breakfast]?.calories || 0) +
+          (plan.lunch[selectedMeals.lunch]?.calories || 0) +
+          (plan.dinner[selectedMeals.dinner]?.calories || 0) +
+          (plan.snacks[selectedMeals.snacks]?.calories || 0)
+      };
+
+      await saveMealPlan({
+        userId: userId as Id<"users">,
+        planData: selectedPlanData,
+        notes: notes || undefined,
+      });
+      Alert.alert("Berhasil", "Rencana pilihan kamu telah disimpan!", [
+        { text: "OK", onPress: () => router.replace("/(tabs)") }
+      ]);
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Gagal", "Gagal menyimpan rencana.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSelection = (category: string, index: number) => {
+    setSelectedMeals(prev => ({ ...prev, [category]: index }));
+  };
+
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -137,7 +195,7 @@ export default function MealPlanScreen() {
             </View>
           )}
         </TouchableOpacity>
-
+        
         {/* Empty / loading state */}
         {!plan && !loading && (
           <View style={styles.emptyState}>
@@ -204,40 +262,68 @@ export default function MealPlanScreen() {
                       </Text>
                     </View>
                   </View>
-                  {items.map((item, idx) => (
-                    <View key={idx} style={styles.mealItem}>
-                      <View style={styles.mealItemLeft}>
-                        <Text style={styles.mealItemName}>{item.name}</Text>
-                        {item.portion && (
-                          <Text style={styles.mealItemPortion}>{item.portion}</Text>
-                        )}
-                      </View>
-                      <View style={styles.mealItemRight}>
-                        <Text style={[styles.mealItemCal, { color }]}>
-                          {Math.round(item.calories ?? 0)} kkal
-                        </Text>
-                        <View style={styles.mealItemMacros}>
-                          <Text style={styles.mealItemMacro}>
-                            P:{Math.round(item.protein ?? 0)}g
-                          </Text>
-                          <Text style={styles.mealItemMacro}>
-                            K:{Math.round(item.carbs ?? 0)}g
-                          </Text>
-                          <Text style={styles.mealItemMacro}>
-                            L:{Math.round(item.fat ?? 0)}g
-                          </Text>
+                  {items.map((item, idx) => {
+                    const isSelected = selectedMeals[key] === idx;
+                    return (
+                      <TouchableOpacity 
+                        key={idx} 
+                        style={[styles.mealItem, isSelected && styles.mealItemActive]}
+                        onPress={() => toggleSelection(key, idx)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.mealItemLeft}>
+                          <View style={styles.mealNameRow}>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={18} color="#10B981" style={{ marginRight: 6 }} />
+                            )}
+                            <Text style={[styles.mealItemName, isSelected && { color: "#059669" }]}>
+                              {item.name}
+                            </Text>
+                          </View>
+                          {item.portion && (
+                            <Text style={styles.mealItemPortion}>{item.portion}</Text>
+                          )}
                         </View>
-                      </View>
-                    </View>
-                  ))}
+                        <View style={styles.mealItemRight}>
+                          <Text style={[styles.mealItemCal, { color: isSelected ? "#10B981" : color }]}>
+                            {Math.round(item.calories ?? 0)} kkal
+                          </Text>
+                          <View style={styles.mealItemMacros}>
+                            <Text style={styles.mealItemMacro}>P:{Math.round(item.protein ?? 0)}g</Text>
+                            <Text style={styles.mealItemMacro}>K:{Math.round(item.carbs ?? 0)}g</Text>
+                            <Text style={styles.mealItemMacro}>L:{Math.round(item.fat ?? 0)}g</Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               );
             })}
+
+            {/* Save Plan Button */}
+            {plan && !loading && (
+              <TouchableOpacity
+                style={styles.saveBtn}
+                onPress={handleSavePlan}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="bookmark" size={20} color="#fff" style={{ marginRight: 8 }} />
+                <Text style={styles.saveBtnText}>Gunakan Rencana Ini</Text>
+              </TouchableOpacity>
+            )}
           </>
         )}
 
         <View style={{ height: 32 }} />
       </ScrollView>
+
+      {/* Floating Consultation ChatBubble */}
+      {plan && !loading && (
+        <ChatBubble 
+          context={`Saya sedang melihat rencana makan AI saya. Menu terpilih adalah: ${JSON.stringify(plan)}. Saya ingin berkonsultasi tentang rencana ini.`} 
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -275,6 +361,19 @@ const styles = StyleSheet.create({
   generateBtnDisabled: { opacity: 0.7 },
   generateBtnInner: { flexDirection: "row", alignItems: "center", justifyContent: "center" },
   generateBtnText: { color: "#fff", fontSize: 17, fontWeight: "800", letterSpacing: -0.3 },
+  saveBtn: {
+    backgroundColor: "#10B981",
+    borderRadius: 24,
+    paddingVertical: 18,
+    marginBottom: 24,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
+  },
+  saveBtnText: { color: "#fff", fontSize: 17, fontWeight: "800", letterSpacing: -0.3 },
   emptyState: { alignItems: "center", paddingVertical: 60 },
   emptyIconCircle: {
     width: 120,
@@ -330,11 +429,24 @@ const styles = StyleSheet.create({
   mealCalText: { fontSize: 12, fontWeight: "800" },
   mealItem: {
     flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.gray[50],
+    paddingVertical: 16, 
+    paddingHorizontal: 12, 
+    borderRadius: 20, 
+    marginVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[50],
+  },
+  mealItemActive: {
+    backgroundColor: "#F0FDF4",
+    borderColor: "#10B981",
+    borderWidth: 1.5,
+    borderBottomWidth: 1.5,
+    borderBottomColor: "#10B981",
   },
   mealItemLeft: { flex: 1, marginRight: 12 },
-  mealItemName: { fontSize: 15, fontWeight: "700", color: COLORS.text.primary, marginBottom: 2 },
-  mealItemPortion: { fontSize: 13, color: COLORS.text.muted },
+  mealNameRow: { flexDirection: "row", alignItems: "center", marginBottom: 2 },
+  mealItemName: { fontSize: 15, fontWeight: "700", color: COLORS.text.primary },
+  mealItemPortion: { fontSize: 13, color: COLORS.text.muted, marginLeft: 24 },
   mealItemRight: { alignItems: "flex-end" },
   mealItemCal: { fontSize: 16, fontWeight: "800" },
   mealItemMacros: { flexDirection: "row", gap: 8, marginTop: 4 },

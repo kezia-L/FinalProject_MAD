@@ -1,7 +1,7 @@
 // app/ai-chat.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useAction, useQuery } from "convex/react";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -25,18 +25,38 @@ import { ChatMessage } from "../lib/types";
 import { useAppStore } from "../store/useAppStore";
 
 export default function AIChatScreen() {
+  const { userId, isLoaded, chatMessages, addMessage, setMessages, clearChat } = useAppStore();
   const router = useRouter();
-  const { userId, chatMessages, addMessage, setMessages, clearChat } = useAppStore();
+  const params = useLocalSearchParams();
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("gemma-4-31b");
+  const [selectedModel, setSelectedModel] = useState("gemma-3-27b");
   const [showModelPicker, setShowModelPicker] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   const chatWithAI = useAction(api.aiChat.chatWithAI);
   const userProfile = useQuery(api.users.getUserById, userId ? { userId: userId as Id<"users"> } : "skip");
 
+  // Proteksi: Jika belum login, lempar ke login
+  useEffect(() => {
+    if (isLoaded && !userId) {
+      router.replace("/(auth)/login");
+    }
+  }, [isLoaded, userId]);
+
+  if (!isLoaded || !userId) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F8FAFC' }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
   const MODELS = [
+    { id: "gemma-3-27b", label: "Gemma 3 27B" },
+    { id: "gemma-3-12b", label: "Gemma 3 12B" },
+    { id: "gemma-3-4b", label: "Gemma 3 4B" },
+    { id: "gemma-3-1b", label: "Gemma 3 1B" },
     { id: "gemma-4-31b", label: "Gemma 4 31B" },
     { id: "gemma-4-26b", label: "Gemma 4 26B" },
     { id: "gemini-3-flash", label: "Gemini 3 Flash" },
@@ -75,6 +95,7 @@ export default function AIChatScreen() {
         messages: history,
         customModel: selectedModel,
         currentTime: timeStr,
+        context: params.context as string, // Kirim konteks dari params
         userProfile: userProfile ? {
           goal: userProfile.goal, dailyCalorieTarget: userProfile.dailyCalorieTarget,
           weight: userProfile.weight, height: userProfile.height, age: userProfile.age,
@@ -121,18 +142,13 @@ export default function AIChatScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      {Platform.OS === "ios" ? (
-        <KeyboardAvoidingView 
-          style={{ flex: 1 }} 
-          behavior="padding"
-        >
-          <ChatUI {...chatProps} />
-        </KeyboardAvoidingView>
-      ) : (
-        <View style={{ flex: 1 }}>
-          <ChatUI {...chatProps} />
-        </View>
-      )}
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
+        <ChatUI {...chatProps} />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -148,8 +164,8 @@ function ChatUI(props: any) {
   } = props;
 
   return (
-    <>
-      {/* Header */}
+    <View style={{ flex: 1 }}>
+      {/* Header (Tetap di atas) */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="close" size={24} color={COLORS.text.secondary} />
@@ -184,14 +200,16 @@ function ChatUI(props: any) {
         </TouchableOpacity>
       </View>
 
-      {/* Chat Messages */}
-      <ScrollView 
-        ref={scrollRef} 
-        style={styles.messageList} 
-        contentContainerStyle={styles.messageContent}
-        showsVerticalScrollIndicator={false} 
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
-      >
+      {/* Container untuk Message dan Input (Agar bisa tumpang tindih) */}
+      <View style={{ flex: 1, position: 'relative' }}>
+        {/* Chat Messages (Dibuat memenuhi container agar bisa lewat di bawah input) */}
+        <ScrollView 
+          ref={scrollRef} 
+          style={StyleSheet.absoluteFill} 
+          contentContainerStyle={styles.messageContent}
+          showsVerticalScrollIndicator={false} 
+          onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
+        >
         {chatMessages.map((msg: any, i: number) => (
           <View key={i} style={[styles.messageRow, msg.role === "user" ? styles.rowUser : styles.rowAI]}>
             {msg.role === "assistant" && (
@@ -232,11 +250,11 @@ function ChatUI(props: any) {
         )}
       </ScrollView>
 
-      {/* Input Area */}
-      <View style={[
-        styles.inputAreaWrapper,
-        isKeyboardVisible && styles.inputAreaWrapperActive
-      ]}>
+        {/* Input Area (Floating Transparent) */}
+        <View style={[
+          styles.inputAreaWrapper,
+          isKeyboardVisible && styles.inputAreaWrapperActive
+        ]}>
         {showModelPicker && (
           <View style={styles.dropdownMenu}>
             {MODELS.map((m: any) => (
@@ -308,8 +326,9 @@ function ChatUI(props: any) {
             </View>
           </View>
         </View>
+        </View>
       </View>
-    </>
+    </View>
   );
 }
 
@@ -523,8 +542,15 @@ const styles = StyleSheet.create({
   },
   menuLabelActive: { color: "#fff" },
 
-  messageList: { flex: 1 },
-  messageContent: { padding: 20, paddingTop: 20, paddingBottom: 40, gap: 20 },
+  messageList: { 
+    flex: 1,
+  },
+  messageContent: { 
+    padding: 20, 
+    paddingTop: 20, 
+    paddingBottom: 160, // Ruang lebih besar agar pesan terakhir tidak tertutup Form Chat
+    gap: 20 
+  },
   messageRow: { flexDirection: "row", alignItems: "flex-end", gap: 12 },
   rowUser: { justifyContent: "flex-end" },
   rowAI: { justifyContent: "flex-start" },
@@ -585,13 +611,17 @@ const styles = StyleSheet.create({
   bubbleTime: { fontSize: 10, color: COLORS.text.muted, marginTop: 8, textAlign: "right", opacity: 0.6 },
 
   inputAreaWrapper: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 20, // Ada jarak dari bawah saat keyboard tertutup (Foto 1)
-    backgroundColor: "transparent",
+    paddingTop: 12,
+    paddingBottom: 4,
+    backgroundColor: "rgba(248, 250, 252, 0.4)", // Jauh lebih transparan agar teks terlihat jelas
   },
   inputAreaWrapperActive: {
-    // Menjaga padding tetap sama agar tidak melebar (Foto 1 style tetap dipertahankan)
+    paddingBottom: 4, 
   },
   inputArea: {
     flexDirection: "row",

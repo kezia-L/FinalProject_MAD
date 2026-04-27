@@ -17,9 +17,9 @@ export const generateWeeklyInsight = action({
     currentTime: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const apiKey = process.env.GEMINI_API_KEY_CHAT || process.env.GEMINI_API_KEY_SCAN || "";
+    const apiKey = process.env.GEMINI_API_KEY_SCAN || "";
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite-preview" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const dataSummary = args.weeklyData
       .map(d => `${d.date}: ${d.calories} kkal`)

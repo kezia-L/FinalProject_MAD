@@ -36,6 +36,11 @@ export default function DashboardScreen() {
     api.foodLogs.getFoodLogsByDate,
     userId ? { userId: userId as Id<"users">, logDate: today } : "skip"
   );
+  
+  const activePlan = useQuery(
+    api.mealPlans.getActiveMealPlan,
+    userId ? { userId: userId as Id<"users"> } : "skip"
+  );
 
   const targets = useMemo(() => ({
     calories: userProfile?.dailyCalorieTarget ?? DEFAULT_DAILY_TARGETS.calories,
@@ -155,6 +160,49 @@ export default function DashboardScreen() {
             <Text style={styles.quickBtnLabel}>Rencana Makan</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Active Meal Plan Section */}
+        {activePlan && (activePlan as any).planData && (
+          <View style={styles.planSection}>
+            <View style={styles.sectionRow}>
+              <Text style={styles.sectionTitle}>Menu Sehat Hari Ini</Text>
+              <TouchableOpacity onPress={() => router.push("/meal-plan")}>
+                <Text style={styles.seeAll}>Ganti Rencana</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.planCard}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.planScroll}>
+                {[
+                  { key: 'breakfast', label: 'Sarapan', icon: 'sunny-outline', color: '#F59E0B' },
+                  { key: 'lunch', label: 'Makan Siang', icon: 'restaurant-outline', color: COLORS.primary },
+                  { key: 'dinner', label: 'Makan Malam', icon: 'moon-outline', color: '#6366F1' },
+                  { key: 'snacks', label: 'Cemilan', icon: 'nutrition-outline', color: '#EC4899' },
+                ].map((item) => {
+                  const mealItems = ((activePlan as any).planData[item.key] as any[]) || [];
+                  const firstMeal = mealItems[0];
+                  return (
+                    <View key={item.key} style={styles.planItem}>
+                      <View style={[styles.planIconWrapper, { backgroundColor: item.color + "15" }]}>
+                        <Ionicons name={item.icon as any} size={20} color={item.color} />
+                      </View>
+                      <Text style={styles.planItemLabel}>{item.label}</Text>
+                      {firstMeal ? (
+                        <>
+                          <Text style={styles.planItemName} numberOfLines={2}>{firstMeal.name}</Text>
+                          <Text style={[styles.planItemCal, { color: item.color }]}>
+                            {Math.round(firstMeal.calories)} kkal
+                          </Text>
+                        </>
+                      ) : (
+                        <Text style={styles.planItemEmpty}>Tidak ada menu</Text>
+                      )}
+                    </View>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          </View>
+        )}
 
         {/* Meal breakdown */}
         <View style={styles.mealBreakdown}>
@@ -374,4 +422,39 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   emptyBtnText: { color: "#fff", fontWeight: "800", fontSize: 15 },
+  planSection: { marginBottom: 24 },
+  planCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  planScroll: { gap: 12 },
+  planItem: {
+    width: 140,
+    backgroundColor: COLORS.background,
+    borderRadius: 20,
+    padding: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  planIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  planItemLabel: { fontSize: 12, color: COLORS.text.muted, fontWeight: "600", marginBottom: 4 },
+  planItemName: { fontSize: 14, fontWeight: "700", color: COLORS.text.primary, textAlign: "center", height: 40, marginBottom: 4 },
+  planItemCal: { fontSize: 13, fontWeight: "800" },
+  planItemEmpty: { fontSize: 12, color: COLORS.text.muted, fontStyle: "italic", marginTop: 10 },
 });
